@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apna Saathi — Product Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #fdf7e3;
+  --surface:  #ffffff;
+  --border:   rgba(0,0,0,0.08);
+  --bdr-md:   rgba(0,0,0,0.13);
+  --text:     #1e1a2e;
+  --text-mid: #4a4560;
+  --muted:    #8a86a0;
+  --sage:     #4a7c6f;
+  --sage-lt:  #d8ede9;
+  --slate:    #3d5a8a;
+  --slate-lt: #dce6f5;
+  --mauve:    #7a5a8a;
+  --mauve-lt: #eeddf5;
+  --rose:     #a0486a;
+  --rose-lt:  #f5dde8;
+  --clay:     #8a5a3a;
+  --clay-lt:  #f5e8dc;
+  --tag-bg:   #ede9e0;
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+}
+
+/* NAV */
+.nav{
+  background:var(--sage);
+  padding:0 3rem;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.nav-back{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:rgba(255,255,255,0.85);
+  text-decoration:none;transition:color .2s;
+}
+.nav-back:hover{color:#fff}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5}
+.nav-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)}
+
+/* HERO */
+.hero{
+  background:linear-gradient(135deg,#b8d8d0 0%,#c8d8f0 100%);
+  padding:5rem 3rem 4rem;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,0.15) 1px,transparent 1px);
+  background-size:20px 20px;pointer-events:none;
+}
+.hero-inner{max-width:860px;margin:0 auto;position:relative}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--sage);background:rgba(255,255,255,0.7);
+  border:1px solid rgba(74,124,111,0.3);
+  padding:4px 12px;border-radius:4px;margin-bottom:1.5rem;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.2rem,5vw,3.5rem);
+  font-weight:700;color:#1e1a2e;letter-spacing:-.03em;
+  line-height:1.1;margin-bottom:1rem;
+}
+.hero-title span{color:var(--sage)}
+.hero-subtitle{
+  font-size:16px;font-weight:300;color:#3a3655;
+  max-width:580px;line-height:1.8;margin-bottom:2.5rem;
+}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:3rem}
+.chip{font-size:11px;padding:4px 11px;border-radius:20px;font-weight:400}
+.chip-sage  {background:var(--sage-lt); color:var(--sage); border:1px solid rgba(74,124,111,0.2)}
+.chip-slate {background:var(--slate-lt);color:var(--slate);border:1px solid rgba(61,90,138,0.2)}
+.chip-dim   {background:rgba(255,255,255,0.6);color:var(--text-mid);border:1px solid rgba(0,0,0,0.1)}
+.hero-stats{
+  display:flex;gap:3rem;flex-wrap:wrap;
+  padding-top:2rem;border-top:1px solid rgba(30,26,46,0.15);
+}
+.stat-num{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;color:var(--sage);line-height:1}
+.stat-label{font-size:11px;color:#5a5675;margin-top:3px;letter-spacing:.03em}
+
+/* CONTENT */
+.content{max-width:860px;margin:0 auto;padding:4rem 3rem 6rem;position:relative;z-index:1}
+
+/* SECTIONS */
+.cs-section{margin-bottom:4rem}
+.cs-eyebrow{font-size:10px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--sage);margin-bottom:.5rem}
+.cs-heading{
+  font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;
+  letter-spacing:-.02em;color:var(--text);margin-bottom:1.25rem;line-height:1.2;
+}
+.cs-body{font-size:15px;font-weight:300;color:var(--text-mid);line-height:1.85;margin-bottom:1rem}
+
+.divider{height:1px;background:var(--bdr-md);margin:3rem 0}
+
+/* HIGHLIGHT BOX */
+.hbox{
+  background:var(--sage-lt);border:1px solid rgba(74,124,111,0.2);
+  border-left:3px solid var(--sage);
+  border-radius:8px;padding:1.5rem 1.75rem;margin:1.5rem 0;
+}
+.hbox-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:.6rem}
+.hbox-text{font-size:15px;font-weight:400;color:#2e4a42;line-height:1.75;font-style:italic}
+
+/* GRIDS */
+.two-col  {display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.25rem 0}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.25rem 0}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem}
+.card-icon{font-size:22px;margin-bottom:.6rem}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:.4rem}
+.card-body{font-size:12.5px;font-weight:300;color:var(--muted);line-height:1.65}
+
+/* PERSONA */
+.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.25rem 0}
+.persona-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem}
+.persona-header{display:flex;align-items:center;gap:10px;margin-bottom:.85rem;padding-bottom:.85rem;border-bottom:1px solid var(--border)}
+.persona-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--sage-lt);display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--sage);flex-shrink:0;
+}
+.persona-name{font-size:14px;font-weight:600;color:var(--text)}
+.persona-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.persona-row{margin-bottom:.65rem}
+.persona-row-label{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.persona-row-text{font-size:12.5px;font-weight:300;color:var(--text-mid);line-height:1.6}
+
+/* JOURNEY */
+.journey-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--border);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;margin:1.25rem 0;
+}
+.journey-col{background:var(--surface);padding:1.1rem 1.2rem}
+.journey-stage{
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 8px;border-radius:3px;display:inline-block;margin-bottom:.75rem;
+}
+.js-sage  {background:var(--sage-lt); color:var(--sage)}
+.js-slate {background:var(--slate-lt);color:var(--slate)}
+.js-mauve {background:var(--mauve-lt);color:var(--mauve)}
+.journey-item{font-size:12px;font-weight:300;color:var(--text-mid);line-height:1.6;margin-bottom:4px;padding-left:10px;position:relative}
+.journey-item::before{content:'·';position:absolute;left:2px;color:var(--muted)}
+.journey-quote{font-size:11.5px;font-style:italic;color:var(--muted);margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);line-height:1.6}
+
+/* USER STORIES TABLE */
+.story-table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:13px}
+.story-table th{background:var(--sage);color:#fff;padding:.6rem 1rem;font-weight:500;font-size:11px;letter-spacing:.05em;text-align:left}
+.story-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border);vertical-align:top;font-weight:300;color:var(--text-mid);line-height:1.55}
+.story-table tr:last-child td{border-bottom:none}
+.story-table tr:nth-child(even) td{background:#f9f7f0}
+.epic-tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.et-sage  {background:var(--sage-lt); color:var(--sage)}
+.et-slate {background:var(--slate-lt);color:var(--slate)}
+.et-mauve {background:var(--mauve-lt);color:var(--mauve)}
+
+/* SCOPE */
+.scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.25rem 0}
+.scope-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem}
+.scope-card.out{border-color:rgba(160,72,106,0.2);background:#fff9fc}
+.scope-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem}
+.scope-title.in {color:var(--sage)}
+.scope-title.out{color:var(--rose)}
+.scope-item{font-size:12.5px;font-weight:300;color:var(--text-mid);padding:4px 0 4px 16px;position:relative;line-height:1.55}
+.scope-item::before{position:absolute;left:0;font-size:11px}
+.scope-item.in::before {content:'✓';color:var(--sage)}
+.scope-item.out::before{content:'✗';color:var(--rose)}
+
+/* FIGMA BLOCK */
+.figma-block{
+  background:var(--sage);border-radius:12px;padding:1.75rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:1.5rem 0;
+}
+.figma-left h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:#fff;margin-bottom:4px}
+.figma-left p{font-size:12.5px;font-weight:300;color:rgba(255,255,255,0.7)}
+.figma-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;color:var(--sage);font-size:12.5px;font-weight:600;
+  padding:9px 18px;border-radius:20px;text-decoration:none;
+  transition:opacity .2s;white-space:nowrap;
+}
+.figma-btn:hover{opacity:.9}
+.figma-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5}
+
+/* MARKET TABLE */
+.market-table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:13px}
+.market-table th{background:var(--sage);color:#fff;padding:.6rem 1rem;font-weight:500;font-size:11px;letter-spacing:.05em;text-align:left}
+.market-table td{padding:.65rem 1rem;border-bottom:1px solid var(--border);font-weight:300;color:var(--text-mid)}
+.market-table tr:last-child td{border-bottom:none;font-weight:600;color:var(--text);background:var(--sage-lt)}
+
+/* PILL */
+.pill{font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:400}
+.p-sage  {background:var(--sage-lt); color:var(--sage)}
+.p-slate {background:var(--slate-lt);color:var(--slate)}
+.p-mauve {background:var(--mauve-lt);color:var(--mauve)}
+.p-gray  {background:var(--tag-bg);  color:var(--text-mid)}
+
+/* BACKGROUND CIRCLES */
+
+
+@media(max-width:680px){
+  .hero{padding:3rem 1.5rem 2.5rem}
+  .content{padding:2.5rem 1.5rem 4rem}
+  .two-col,.three-col,.persona-grid,.scope-grid{grid-template-columns:1fr}
+  .journey-grid{grid-template-columns:1fr}
+  .nav{padding:0 1.5rem}
+}
+</style>
+</head>
+<body>
+
+
+
+<nav class="nav">
+  <a href="index.html" class="nav-back">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to portfolio
+  </a>
+  <div class="nav-title">Case Study</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Consumer App · 0 → 1</div>
+    <h1 class="hero-title">Apna <span>Saathi</span></h1>
+    <p class="hero-subtitle">A social community platform for older adults aged 55+ to discover local and online events, build meaningful connections, and stay active — designed from the ground up.</p>
+    <div class="hero-chips">
+      <span class="chip chip-sage">Product strategy</span>
+      <span class="chip chip-sage">User research</span>
+      <span class="chip chip-slate">High-fidelity Figma prototype</span>
+      <span class="chip chip-slate">User stories &amp; acceptance criteria</span>
+      <span class="chip chip-dim">Consumer mobile app</span>
+      <span class="chip chip-dim">India · 55+ adults</span>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num">26</div><div class="stat-label">Survey respondents</div></div>
+      <div class="stat-item"><div class="stat-num">6</div><div class="stat-label">User interviews</div></div>
+      <div class="stat-item"><div class="stat-num">10+</div><div class="stat-label">Screens designed</div></div>
+      <div class="stat-item"><div class="stat-num">1.5M</div><div class="stat-label">SOM estimate</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">01 — Problem</div>
+    <h2 class="cs-heading">Older adults are isolated. Existing platforms don't serve them.</h2>
+    <p class="cs-body">India has over 225 million people aged 55 and above. As children move to different cities and routines change post-retirement, a large segment faces social isolation. Platforms like Facebook and WhatsApp groups are not designed for their unique needs: accessibility, proximity, curated interests, and a sense of belonging.</p>
+    <div class="hbox">
+      <div class="hbox-label">Problem statement</div>
+      <div class="hbox-text">"Older adults often face isolation and limited opportunities for meaningful community engagement. They seek platforms that offer tailored, accessible connections to stay active, pursue hobbies, and build lasting relationships. Existing platforms fail to address these unique needs."</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">02 — Design Brief</div>
+    <h2 class="cs-heading">How might we enable older adults to form meaningful connections?</h2>
+    <div class="three-col">
+      <div class="card"><div class="card-icon">👥</div><div class="card-title">Enable</div><div class="card-body">Older adults (55+) in Tier 1 cities to form meaningful social connections and engage in community activities.</div></div>
+      <div class="card"><div class="card-icon">🎯</div><div class="card-title">To achieve</div><div class="card-body">Stay active in personal goals, health, and hobbies through a platform that fosters interaction and well-being.</div></div>
+      <div class="card"><div class="card-icon">🏡</div><div class="card-title">While</div><div class="card-body">Navigating their lifestyle both at home and on the go — through both online and offline experiences.</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">03 — Market Opportunity</div>
+    <h2 class="cs-heading">A large, underserved market in India's Tier 1 cities</h2>
+    <table class="market-table">
+      <thead><tr><th>Level</th><th>Segment</th><th>Estimate</th><th>Assumption</th></tr></thead>
+      <tbody>
+        <tr><td><strong>TAM</strong></td><td>India 55+ population</td><td>22.5 crore</td><td>15% of 1.5B (2021 Census)</td></tr>
+        <tr><td><strong>SAM</strong></td><td>Tier 1 cities (Delhi, Mumbai, Bengaluru, Chennai, Hyderabad)</td><td>1.725 crore</td><td>15% of 11.5 cr Tier 1 population</td></tr>
+        <tr><td></td><td>Active smartphone users in SAM</td><td>1.035 crore</td><td>60% with app/payment know-how</td></tr>
+        <tr><td></td><td>Digitally literate cohort</td><td>0.72 crore</td><td>70% digital literacy within above</td></tr>
+        <tr><td><strong>SOM</strong></td><td>Year 1 active users (20% adoption, 60% retention)</td><td><strong>~1.55 lakh</strong></td><td>15% inclined toward community events</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">04 — User Research</div>
+    <h2 class="cs-heading">6 interviews + 26 survey responses shaped the product</h2>
+    <div class="two-col">
+      <div class="card"><div class="card-title">Event type preferences</div><div class="card-body">Cultural performances, health &amp; wellness workshops, and spiritual gatherings were top preferences. 55–64 year olds preferred outdoor activities; 65+ preferred spiritual events.</div></div>
+      <div class="card"><div class="card-title">Barriers to participation</div><div class="card-body">Transportation and lack of event awareness were the top barriers. Those with health constraints preferred virtual events but still missed the personal touch.</div></div>
+      <div class="card"><div class="card-title">Group size preference</div><div class="card-body">Most preferred intimate groups (&lt;20 people) for deeper engagement. This directly drove the event discovery and filtering design.</div></div>
+      <div class="card"><div class="card-title">Tech comfort</div><div class="card-body">Most users were active on WhatsApp and Facebook. Some needed family support for new apps — leading to a simplified OTP-based onboarding and family-assisted setup option.</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">05 — User Personas</div>
+    <h2 class="cs-heading">Two core personas drove all design decisions</h2>
+    <div class="persona-grid">
+      <div class="persona-card">
+        <div class="persona-header">
+          <div class="persona-avatar">KS</div>
+          <div><div class="persona-name">KS Murthy — Community Enthusiast</div><div class="persona-meta">58 · Hyderabad · Active on WhatsApp &amp; Facebook</div></div>
+        </div>
+        <div class="persona-row"><div class="persona-row-label">Goals</div><div class="persona-row-text">Meet new people at large cultural and social events. Convenient location and evening timing. Stay informed about community happenings.</div></div>
+        <div class="persona-row"><div class="persona-row-label">Pain points</div><div class="persona-row-text">Transportation to venue. High event entry fees. Needs clear schedules and reminders.</div></div>
+        <div class="persona-row"><div class="persona-row-label">Interests</div><div class="persona-row-text">Gardening, political discussions, cultural events, wellness workshops.</div></div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-header">
+          <div class="persona-avatar" style="background:var(--slate-lt);color:var(--slate)">My</div>
+          <div><div class="persona-name">Maya — Flexible Engager</div><div class="persona-meta">64 · Bengaluru · Basic apps with family support</div></div>
+        </div>
+        <div class="persona-row"><div class="persona-row-label">Goals</div><div class="persona-row-text">Hobby-based activities, wellness, spiritual gatherings. Hybrid events. Nearby or virtual events to minimise travel.</div></div>
+        <div class="persona-row"><div class="persona-row-label">Pain points</div><div class="persona-row-text">Events feel repetitive. Transportation and health limit mobility. Hard to navigate new tech independently.</div></div>
+        <div class="persona-row"><div class="persona-row-label">Interests</div><div class="persona-row-text">Yoga, cooking, meditation, spiritual gatherings, OTT content.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">06 — User Journey</div>
+    <h2 class="cs-heading">From discovery to advocacy across 6 stages</h2>
+    <div class="journey-grid">
+      <div class="journey-col"><div class="journey-stage js-sage">Awareness</div><div class="journey-item">Word of mouth from friends/family</div><div class="journey-item">WhatsApp / Facebook ads</div><div class="journey-item">Partnership with senior centres</div><div class="journey-quote">"I got to know about Apna Saathi through a newspaper flyer."</div></div>
+      <div class="journey-col"><div class="journey-stage js-slate">Consideration</div><div class="journey-item">Visits app / platform</div><div class="journey-item">Explores event booking features</div><div class="journey-item">Reads reviews/testimonials</div><div class="journey-quote">"I downloaded the app and explored features like event booking."</div></div>
+      <div class="journey-col"><div class="journey-stage js-mauve">Onboarding</div><div class="journey-item">OTP-based mobile login</div><div class="journey-item">Personal details + hobbies setup</div><div class="journey-item">Video tutorial + chat support</div><div class="journey-quote">"I went through the tutorial before booking my first event."</div></div>
+      <div class="journey-col"><div class="journey-stage js-sage">Engagement</div><div class="journey-item">In-app event notifications</div><div class="journey-item">Community forum updates</div><div class="journey-item">Event reminders &amp; schedule</div><div class="journey-quote">"I get all details through app notifications. Easy not to miss something I like."</div></div>
+      <div class="journey-col"><div class="journey-stage js-slate">Retention</div><div class="journey-item">Personalised recommendations</div><div class="journey-item">Post-event feedback surveys</div><div class="journey-item">Reward points system</div><div class="journey-quote">"I look forward to more events — I need not search through a lot of info."</div></div>
+      <div class="journey-col"><div class="journey-stage js-mauve">Advocacy</div><div class="journey-item">Referral programme</div><div class="journey-item">Social media sharing</div><div class="journey-item">Testimonial requests</div><div class="journey-quote">"I invited my friends through the referral program."</div></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">07 — Product Scope</div>
+    <h2 class="cs-heading">What's in and what's deliberately out</h2>
+    <div class="scope-grid">
+      <div class="scope-card">
+        <div class="scope-title in">In scope (MVP)</div>
+        <div class="scope-item in">Event discovery with personalised recommendations</div>
+        <div class="scope-item in">Filter by category, distance, price, online/offline</div>
+        <div class="scope-item in">OTP-based onboarding with hobbies setup</div>
+        <div class="scope-item in">User profiles with photo, interests, about me</div>
+        <div class="scope-item in">Ticketing, payment (UPI, GPay, Cards), refund</div>
+        <div class="scope-item in">Reward points &amp; discount code redemption</div>
+        <div class="scope-item in">Social posts, likes, comments, sharing</div>
+        <div class="scope-item in">Push notifications &amp; WhatsApp/email reminders</div>
+      </div>
+      <div class="scope-card out">
+        <div class="scope-title out">Out of scope</div>
+        <div class="scope-item out">Proprietary video/hardware infrastructure</div>
+        <div class="scope-item out">Event logistics management for organisers</div>
+        <div class="scope-item out">Tier 2/3 city launch at MVP stage</div>
+        <div class="scope-item out">Health tracking or wearable integrations</div>
+        <div class="scope-item out">In-app video calling (uses Zoom/Google Meet)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">08 — User Stories</div>
+    <h2 class="cs-heading">Epics and acceptance criteria</h2>
+    <table class="story-table">
+      <thead><tr><th style="width:18%">Epic</th><th style="width:42%">User story</th><th>Acceptance criteria</th></tr></thead>
+      <tbody>
+        <tr><td><span class="epic-tag et-sage">Event Discovery</span></td><td>As a user I want to view all available events with title, date, category, and location.</td><td>Events listed with all details. Empty state shows "No events available."</td></tr>
+        <tr><td><span class="epic-tag et-sage">Event Discovery</span></td><td>As a user I want to filter events by category and combine multiple filters.</td><td>Single and multi-filter works. Empty result handled gracefully.</td></tr>
+        <tr><td><span class="epic-tag et-sage">Event Discovery</span></td><td>As a user I want to search events by keyword to find relevant activities.</td><td>Search returns matching events. No-match state handled.</td></tr>
+        <tr><td><span class="epic-tag et-slate">User Profile</span></td><td>As a user I want to fill in and edit my personal details — name, age, hobbies, location.</td><td>All fields editable. Changes reflected immediately across the app.</td></tr>
+        <tr><td><span class="epic-tag et-slate">User Profile</span></td><td>As a user I want to receive event suggestions based on my interests and location.</td><td>Recommendations surface from profile data and link to events.</td></tr>
+        <tr><td><span class="epic-tag et-slate">User Profile</span></td><td>As a user I want to check my reward points and understand how to redeem them.</td><td>Rewards section shows balance + FAQ. Redeem flow visible.</td></tr>
+        <tr><td><span class="epic-tag et-mauve">Ticketing</span></td><td>As a user I want to buy a ticket, pay securely, and receive digital confirmation.</td><td>Payment succeeds → ticket issued. Visible under "My Bookings."</td></tr>
+        <tr><td><span class="epic-tag et-mauve">Ticketing</span></td><td>As a user I want to request a refund for a refundable ticket.</td><td>Refund confirmation shown. Amount returned to source account.</td></tr>
+        <tr><td><span class="epic-tag et-mauve">Ticketing</span></td><td>As a user I want to apply a referral discount code at checkout.</td><td>Valid code → new price displayed. Invalid code → error message.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">09 — Product Screens</div>
+    <h2 class="cs-heading">10 screens from sketch to high-fidelity prototype</h2>
+    <div class="three-col" style="margin-bottom:1rem">
+      <div class="card"><div class="card-title">Screen 1 — Onboarding</div><div class="card-body">Mobile number entry + OTP verification. Single-purpose screens to minimise friction.</div></div>
+      <div class="card"><div class="card-title">Screen 2 — Sign up</div><div class="card-body">Name, age bracket, email, gender, city, and hobby selection (up to 3).</div></div>
+      <div class="card"><div class="card-title">Screen 3 — Home</div><div class="card-body">Event category tabs, reward points, event cards, community posts feed.</div></div>
+      <div class="card"><div class="card-title">Screen 4 — Find events</div><div class="card-body">Offline/Online toggle, calendar picker, distance filter, free-only filter.</div></div>
+      <div class="card"><div class="card-title">Screen 5 — Filter</div><div class="card-body">Category dropdown, distance slider (1–20 km), price range. Reset + Apply.</div></div>
+      <div class="card"><div class="card-title">Screen 6 — Menu</div><div class="card-body">Profile, Reward Points, My Network, Chat with Us, About, T&amp;Cs.</div></div>
+      <div class="card"><div class="card-title">Screen 7 — Event detail</div><div class="card-body">Event poster, attendees, description, time slot, organiser, price, Book CTA.</div></div>
+      <div class="card"><div class="card-title">Screen 8 — Payment</div><div class="card-body">Confirm booking, price breakdown, reward points deduction, UPI/Cards.</div></div>
+      <div class="card"><div class="card-title">Screen 9 — Confirmation</div><div class="card-body">Booking ID, event details, reminder/calendar add, cancel, Book More CTA.</div></div>
+      <div class="card"><div class="card-title">Screen 10 — Profile</div><div class="card-body">Profile photo, name, interests, about me, posted photos, past events.</div></div>
+    </div>
+    <div class="figma-block">
+      <div class="figma-left">
+        <h3>View the Figma prototype</h3>
+        <p>Full interactive high-fidelity prototype — all 10 screens linked and clickable</p>
+      </div>
+      <a href="https://www.figma.com/proto/ADxsInC3HvQ49NW25GbRE6/C43-BYOP-G-01-E?node-id=32-70&t=wJoKi0wS7svLG1XX-1" target="_blank" class="figma-btn">
+        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+        Open prototype
+      </a>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="cs-section">
+    <div class="cs-eyebrow">10 — Reflection</div>
+    <h2 class="cs-heading">What building this taught me</h2>
+    <div class="three-col">
+      <div class="card"><div class="card-icon">🔍</div><div class="card-title">Research shapes everything</div><div class="card-body">The insight that 65+ users prefer spiritual events while 55–64 prefer outdoor activities directly changed the category taxonomy and home screen design.</div></div>
+      <div class="card"><div class="card-icon">⚖️</div><div class="card-title">Scope discipline is PM work</div><div class="card-body">Deciding what's explicitly out — proprietary video, hardware, Tier 2 expansion — was as important as defining what's in. It kept the MVP focused.</div></div>
+      <div class="card"><div class="card-icon">👤</div><div class="card-title">Personas prevent assumption traps</div><div class="card-body">KS Murthy and Maya had fundamentally different needs. Without them, we'd have built one app for two very different users — and served neither well.</div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
