@@ -6,11 +6,14 @@ import {
   CustomFoodItem,
   DayLog,
   HouseholdConfig,
+  HouseholdFoodPref,
+  KnownHousehold,
   LoggedFood,
   MealLog,
   MealType,
   Member,
   Nutrition,
+  SupabaseFood,
 } from "./types";
 import { MEALS } from "./foods";
 import {
@@ -18,18 +21,22 @@ import {
   upsertDayLog,
   fetchDayLog,
   fetchHouseholdByCode,
+  fetchFoods,
+  fetchHouseholdFoodPrefs,
   fetchCustomFoods,
   insertCustomFood,
   generateJoinCode,
+  recordMembership,
 } from "./supabase";
+import { v4 as uuidv4 } from "uuid";
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function todayKey(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-export function emptyMealLog(meal: MealType): MealLog {
+function emptyMealLog(meal: MealType): MealLog {
   return { meal, foodsByMember: {}, doneByMember: {} };
 }
 
@@ -60,6 +67,15 @@ export function sumNutrition(foods: LoggedFood[]): Nutrition {
   );
 }
 
+/** Stable device token — one UUID per browser, never changes */
+function getDeviceToken(): string {
+  if (typeof window === "undefined") return "ssr";
+  const key = "homeplate-device-token";
+  let token = localStorage.getItem(key);
+  if (!token) { token = uuidv4(); localStorage.setItem(key, token); }
+  return token;
+}
+
 const DEV_HOUSEHOLD: HouseholdConfig = {
   householdName: "Our Household",
   onboardingComplete: false,
@@ -73,7 +89,7 @@ const DEV_HOUSEHOLD: HouseholdConfig = {
   ],
 };
 
-// ─── state shape ─────────────────────────────────────────────────────────────
+// ─── State shape ─────────────────────────────────────────────────────────────
 
 interface SyncState {
   syncing: boolean;
@@ -82,37 +98,42 @@ interface SyncState {
 }
 
 interface AppState {
+  // ── Household ─────────────────────────────────────────────────────────────
   household: HouseholdConfig;
+  knownHouseholds: KnownHousehold[];  // all households this device has joined
 
-  // ── date navigation ──────────────────────────────────────────────────────
+  // ── Date navigation ───────────────────────────────────────────────────────
   selectedDate: string;
-  dayLogsCache: Record<string, DayLog>; // keyed by "YYYY-MM-DD"
-
-  // dayLog is always dayLogsCache[selectedDate]
+  dayLogsCache: Record<string, DayLog>;
   dayLog: DayLog;
 
-  // ── custom foods ─────────────────────────────────────────────────────────
-  customFoods: CustomFoodItem[];
-  recentFoodIds: string[];   // food IDs used recently (up to 20)
+  // ── Food catalogue ────────────────────────────────────────────────────────
+  foods: SupabaseFood[];              // loaded from Supabase
+  householdFoodPrefs: Record<string, HouseholdFoodPref>; // food_id → pref
+  customFoods: CustomFoodItem[];      // legacy custom_foods table
+  recentFoodCodes: string[];          // food_codes used recently (max 20)
 
-  // ── ui state ─────────────────────────────────────────────────────────────
+  // ── UI state ──────────────────────────────────────────────────────────────
   sync: SyncState;
   activeLoggingMeal: MealType | null;
   activeLoggingMemberId: string | null;
   showSummary: boolean;
 
-  // ── household ────────────────────────────────────────────────────────────
+  // ── Household actions ─────────────────────────────────────────────────────
   saveHousehold: (config: HouseholdConfig) => Promise<void>;
   joinHousehold: (code: string) => Promise<{ success: boolean; error?: string }>;
+  createAndSwitchHousehold: (config: HouseholdConfig) => Promise<void>;
+  switchHousehold: (householdId: string) => Promise<void>;
+  leaveHousehold: (householdId: string) => void;
   updateMember: (member: Member) => Promise<void>;
 
-  // ── date navigation ──────────────────────────────────────────────────────
+  // ── Date navigation ───────────────────────────────────────────────────────
   setSelectedDate: (date: string) => Promise<void>;
   goToPrevDay: () => Promise<void>;
   goToNextDay: () => Promise<void>;
   goToToday: () => Promise<void>;
 
-  // ── food logging (operate on selectedDate) ───────────────────────────────
+  // ── Food logging ──────────────────────────────────────────────────────────
   addFood: (food: LoggedFood) => void;
   removeFood: (foodId: string, meal: MealType, memberId: string) => void;
   editFood: (foodId: string, meal: MealType, memberId: string, updates: Partial<LoggedFood>) => void;
@@ -121,31 +142,31 @@ interface AppState {
   startLogging: (meal: MealType, memberId: string) => void;
   stopLogging: () => void;
 
-  // ── custom foods ─────────────────────────────────────────────────────────
+  // ── Food catalogue ────────────────────────────────────────────────────────
+  loadFoods: () => Promise<void>;
   addCustomFood: (food: Omit<CustomFoodItem, "id" | "createdAt">) => Promise<CustomFoodItem>;
-  loadCustomFoods: () => Promise<void>;
-  trackRecentFood: (foodId: string) => void;
+  trackRecentFood: (foodCode: string) => void;
 
-  // ── derived reads ─────────────────────────────────────────────────────────
-  getMemberFoodsForMeal: (meal: MealType, memberId: string, date?: string) => LoggedFood[];
-  getMealNutrition: (meal: MealType, memberId: string, date?: string) => Nutrition;
-  getMemberNutrition: (memberId: string, date?: string) => Nutrition;
+  // ── Derived reads ─────────────────────────────────────────────────────────
+  getMemberFoodsForMeal: (meal: MealType, memberId: string) => LoggedFood[];
+  getMealNutrition: (meal: MealType, memberId: string) => Nutrition;
+  getMemberNutrition: (memberId: string) => Nutrition;
 
-  // ── summary ───────────────────────────────────────────────────────────────
+  // ── Summary ───────────────────────────────────────────────────────────────
   setShowSummary: (v: boolean) => void;
 
-  // ── sync ──────────────────────────────────────────────────────────────────
+  // ── Sync ──────────────────────────────────────────────────────────────────
   pullLatest: (date?: string) => Promise<void>;
   resetDay: () => void;
 }
 
-// ─── store ───────────────────────────────────────────────────────────────────
+// ─── Store ───────────────────────────────────────────────────────────────────
 
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => {
 
-      // ── internal sync helpers ───────────────────────────────────────────
+      // ── Internal helpers ────────────────────────────────────────────────
 
       async function pushDayLog(dayLog: DayLog) {
         const { household } = get();
@@ -165,15 +186,14 @@ export const useAppStore = create<AppState>()(
         catch { /* silent */ }
       }
 
-      /** Mutate the dayLog for `selectedDate` then push */
       function mutateDayLog(updater: (day: DayLog) => DayLog) {
         set((state) => {
-          const date = state.selectedDate;
+          const date    = state.selectedDate;
           const current = state.dayLogsCache[date] ?? emptyDayForDate(date);
-          const next = updater({ ...current });
+          const next    = updater({ ...current });
           pushDayLog(next);
           return {
-            dayLog: next,
+            dayLog:       next,
             dayLogsCache: { ...state.dayLogsCache, [date]: next },
           };
         });
@@ -192,22 +212,46 @@ export const useAppStore = create<AppState>()(
         }
       }
 
+      /** Record membership in Supabase (best-effort, non-blocking) */
+      function trackMembership(householdId: string, memberId: string) {
+        const token = getDeviceToken();
+        recordMembership(householdId, token, memberId).catch(() => {});
+      }
+
       return {
         household: DEV_HOUSEHOLD,
+        knownHouseholds: [],
         selectedDate: todayKey(),
         dayLogsCache: {},
         dayLog: emptyDay(),
+        foods: [],
+        householdFoodPrefs: {},
         customFoods: [],
-        recentFoodIds: [],
+        recentFoodCodes: [],
         sync: { syncing: false, lastSyncedAt: null, syncError: null },
         activeLoggingMeal: null,
         activeLoggingMemberId: null,
         showSummary: false,
 
-        // ── household ────────────────────────────────────────────────────
+        // ── Household ──────────────────────────────────────────────────────
+
         saveHousehold: async (config) => {
           set({ household: config });
           await pushHousehold(config);
+          // Track in knownHouseholds
+          set((s) => {
+            const entry: KnownHousehold = {
+              householdId:  config.householdId,
+              joinCode:     config.joinCode,
+              householdName: config.householdName,
+              memberCount:  config.members.length,
+            };
+            const others = s.knownHouseholds.filter(
+              (h) => h.householdId !== config.householdId
+            );
+            return { knownHouseholds: [entry, ...others] };
+          });
+          trackMembership(config.householdId, config.members[0]?.id ?? "");
         },
 
         joinHousehold: async (joinCode) => {
@@ -219,17 +263,31 @@ export const useAppStore = create<AppState>()(
               return { success: false, error: "No household found with that code." };
             }
             const config = row.config as HouseholdConfig;
-            const meals = await fetchDayLog(row.id, todayKey());
+            const meals  = await fetchDayLog(row.id, todayKey());
             const dayLog = meals
               ? { date: todayKey(), meals: meals as DayLog["meals"] }
               : emptyDay();
-            set({
-              household: config,
+
+            const entry: KnownHousehold = {
+              householdId:   row.id,
+              joinCode:      row.join_code,
+              householdName: config.householdName,
+              memberCount:   config.members.length,
+            };
+
+            set((s) => ({
+              household:       config,
               dayLog,
-              dayLogsCache: { [todayKey()]: dayLog },
-              selectedDate: todayKey(),
+              dayLogsCache:    { [todayKey()]: dayLog },
+              selectedDate:    todayKey(),
+              knownHouseholds: [
+                entry,
+                ...s.knownHouseholds.filter((h) => h.householdId !== row.id),
+              ],
               sync: { syncing: false, lastSyncedAt: new Date().toISOString(), syncError: null },
-            });
+            }));
+
+            trackMembership(row.id, config.members[0]?.id ?? "");
             return { success: true };
           } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : "Failed to join";
@@ -238,49 +296,113 @@ export const useAppStore = create<AppState>()(
           }
         },
 
+        createAndSwitchHousehold: async (config) => {
+          await get().saveHousehold(config);
+          // dayLog and household are already set by saveHousehold
+          set({ dayLog: emptyDay(), dayLogsCache: {} });
+        },
+
+        switchHousehold: async (householdId) => {
+          const known = get().knownHouseholds.find((h) => h.householdId === householdId);
+          if (!known) return;
+
+          // Re-fetch the config from Supabase for this household
+          set((s) => ({ sync: { ...s.sync, syncing: true } }));
+          try {
+            const { data } = await import("./supabase").then((m) =>
+              m.supabase.from("households").select("*").eq("id", householdId).single()
+            );
+            if (!data) { set((s) => ({ sync: { ...s.sync, syncing: false } })); return; }
+            const config  = data.config as HouseholdConfig;
+            const meals   = await fetchDayLog(householdId, todayKey());
+            const dayLog  = meals
+              ? { date: todayKey(), meals: meals as DayLog["meals"] }
+              : emptyDay();
+
+            set({
+              household:    config,
+              dayLog,
+              dayLogsCache: { [todayKey()]: dayLog },
+              selectedDate: todayKey(),
+              foods:        [],
+              customFoods:  [],
+              sync:         { syncing: false, lastSyncedAt: new Date().toISOString(), syncError: null },
+            });
+          } catch {
+            set((s) => ({ sync: { ...s.sync, syncing: false } }));
+          }
+        },
+
+        leaveHousehold: (householdId) => {
+          set((s) => {
+            const remaining = s.knownHouseholds.filter(
+              (h) => h.householdId !== householdId
+            );
+            // If leaving the active household, switch to the next one or reset
+            if (s.household.householdId === householdId) {
+              const next = remaining[0];
+              if (next) {
+                // Trigger async switch (fire-and-forget in this sync method)
+                setTimeout(() => get().switchHousehold(next.householdId), 0);
+              }
+              return {
+                knownHouseholds: remaining,
+                household:       next ? s.household : { ...DEV_HOUSEHOLD },
+              };
+            }
+            return { knownHouseholds: remaining };
+          });
+        },
+
         updateMember: async (member) => {
           const updated = {
             ...get().household,
-            members: get().household.members.map((m) => m.id === member.id ? member : m),
+            members: get().household.members.map((m) =>
+              m.id === member.id ? member : m
+            ),
           };
           set({ household: updated });
           await pushHousehold(updated);
+          // Keep knownHouseholds in sync
+          set((s) => ({
+            knownHouseholds: s.knownHouseholds.map((h) =>
+              h.householdId === updated.householdId
+                ? { ...h, householdName: updated.householdName, memberCount: updated.members.length }
+                : h
+            ),
+          }));
         },
 
-        // ── date navigation ──────────────────────────────────────────────
+        // ── Date navigation ────────────────────────────────────────────────
+
         setSelectedDate: async (date) => {
           const { dayLogsCache } = get();
           const cached = dayLogsCache[date];
-          const dayLog = cached ?? emptyDayForDate(date);
-          set({ selectedDate: date, dayLog });
+          set({ selectedDate: date, dayLog: cached ?? emptyDayForDate(date) });
           if (!cached) await loadDateFromSupabase(date);
         },
 
         goToPrevDay: async () => {
-          const { selectedDate } = get();
-          const d = new Date(selectedDate);
+          const d = new Date(get().selectedDate);
           d.setDate(d.getDate() - 1);
           await get().setSelectedDate(d.toISOString().split("T")[0]);
         },
 
         goToNextDay: async () => {
-          const { selectedDate } = get();
           const today = todayKey();
-          if (selectedDate >= today) return; // can't go to future
-          const d = new Date(selectedDate);
+          if (get().selectedDate >= today) return;
+          const d = new Date(get().selectedDate);
           d.setDate(d.getDate() + 1);
           await get().setSelectedDate(d.toISOString().split("T")[0]);
         },
 
-        goToToday: async () => {
-          await get().setSelectedDate(todayKey());
-        },
+        goToToday: async () => get().setSelectedDate(todayKey()),
 
-        // ── food logging ─────────────────────────────────────────────────
+        // ── Food logging ───────────────────────────────────────────────────
+
         addFood: (food) => {
-          // deduplicate: if exact same id already exists, skip
-          const { dayLog } = get();
-          const existing = dayLog.meals[food.meal].foodsByMember[food.memberId] ?? [];
+          // Deduplicate by id
+          const existing = get().dayLog.meals[food.meal].foodsByMember[food.memberId] ?? [];
           if (existing.find((f) => f.id === food.id)) return;
 
           mutateDayLog((day) => {
@@ -290,8 +412,9 @@ export const useAppStore = create<AppState>()(
             return { ...day, meals: { ...day.meals, [food.meal]: meal } };
           });
 
-          // Track recently used food
-          if (!food.isQuickEntry) get().trackRecentFood(food.foodItem.id);
+          if (!food.isQuickEntry && food.foodCode) {
+            get().trackRecentFood(food.foodCode);
+          }
         },
 
         removeFood: (foodId, meal, memberId) => {
@@ -340,7 +463,30 @@ export const useAppStore = create<AppState>()(
         stopLogging: () =>
           set({ activeLoggingMeal: null, activeLoggingMemberId: null }),
 
-        // ── custom foods ─────────────────────────────────────────────────
+        // ── Food catalogue ─────────────────────────────────────────────────
+
+        loadFoods: async () => {
+          const { household, customFoods: existing } = get();
+          try {
+            const foods = await fetchFoods(household.householdId || undefined);
+            set({ foods });
+
+            // Also load household food prefs
+            if (household.householdId) {
+              const prefs = await fetchHouseholdFoodPrefs(household.householdId);
+              const prefsMap = Object.fromEntries(prefs.map((p) => [p.food_id, p]));
+              set({ householdFoodPrefs: prefsMap });
+
+              // Load legacy custom foods
+              const memberId = household.members[0]?.id ?? "";
+              const custom = await fetchCustomFoods(household.householdId, memberId);
+              set({ customFoods: custom });
+            }
+          } catch (e) {
+            console.error("loadFoods failed:", e);
+          }
+        },
+
         addCustomFood: async (food) => {
           const { id, createdAt } = await insertCustomFood(food);
           const full: CustomFoodItem = { ...food, id, createdAt };
@@ -348,44 +494,37 @@ export const useAppStore = create<AppState>()(
           return full;
         },
 
-        loadCustomFoods: async () => {
-          const { household } = get();
-          if (!household.householdId) return;
-          const memberId = household.members[0]?.id ?? "";
-          const foods = await fetchCustomFoods(household.householdId, memberId);
-          set({ customFoods: foods });
+        trackRecentFood: (foodCode) => {
+          set((s) => ({
+            recentFoodCodes: [
+              foodCode,
+              ...s.recentFoodCodes.filter((c) => c !== foodCode),
+            ].slice(0, 20),
+          }));
         },
 
-        trackRecentFood: (foodId) => {
-          set((s) => {
-            const ids = [foodId, ...s.recentFoodIds.filter((id) => id !== foodId)].slice(0, 20);
-            return { recentFoodIds: ids };
-          });
-        },
+        // ── Derived reads ──────────────────────────────────────────────────
 
-        // ── derived reads ─────────────────────────────────────────────────
-        getMemberFoodsForMeal: (meal, memberId, date) => {
-          const { dayLog, dayLogsCache, selectedDate } = get();
-          const d = date ?? selectedDate;
-          const log = d === selectedDate ? dayLog : (dayLogsCache[d] ?? emptyDayForDate(d));
-          return log.meals[meal].foodsByMember[memberId] ?? [];
-        },
+        getMemberFoodsForMeal: (meal, memberId) =>
+          get().dayLog.meals[meal].foodsByMember[memberId] ?? [],
 
-        getMealNutrition: (meal, memberId, date) =>
-          sumNutrition(get().getMemberFoodsForMeal(meal, memberId, date)),
+        getMealNutrition: (meal, memberId) =>
+          sumNutrition(get().getMemberFoodsForMeal(meal, memberId)),
 
-        getMemberNutrition: (memberId, date) => {
-          const { dayLog, dayLogsCache, selectedDate } = get();
-          const d = date ?? selectedDate;
-          const log = d === selectedDate ? dayLog : (dayLogsCache[d] ?? emptyDayForDate(d));
-          const allFoods = MEALS.flatMap((m) => log.meals[m].foodsByMember[memberId] ?? []);
+        getMemberNutrition: (memberId) => {
+          const { dayLog } = get();
+          const allFoods = MEALS.flatMap(
+            (m) => dayLog.meals[m].foodsByMember[memberId] ?? []
+          );
           return sumNutrition(allFoods);
         },
 
-        // ── summary ──────────────────────────────────────────────────────
+        // ── Summary ────────────────────────────────────────────────────────
+
         setShowSummary: (v) => set({ showSummary: v }),
 
-        // ── sync ─────────────────────────────────────────────────────────
+        // ── Sync ───────────────────────────────────────────────────────────
+
         pullLatest: async (date) => {
           const { household, selectedDate } = get();
           if (!household.householdId) return;
@@ -400,7 +539,9 @@ export const useAppStore = create<AppState>()(
                 ...(s.selectedDate === target ? { dayLog: day } : {}),
               }));
             }
-            set((s) => ({ sync: { ...s.sync, syncing: false, lastSyncedAt: new Date().toISOString(), syncError: null } }));
+            set((s) => ({
+              sync: { ...s.sync, syncing: false, lastSyncedAt: new Date().toISOString(), syncError: null },
+            }));
           } catch {
             set((s) => ({ sync: { ...s.sync, syncing: false } }));
           }
@@ -410,7 +551,7 @@ export const useAppStore = create<AppState>()(
           const { selectedDate } = get();
           const day = emptyDayForDate(selectedDate);
           set((s) => ({
-            dayLog: day,
+            dayLog:       day,
             dayLogsCache: { ...s.dayLogsCache, [selectedDate]: day },
           }));
           pushDayLog(day);
@@ -418,15 +559,15 @@ export const useAppStore = create<AppState>()(
       };
     },
     {
-      name: "homeplate-store-v4",
-      // Don't persist the full cache — just today + household
+      name: "homeplate-store-v5",
       partialize: (s) => ({
-        household: s.household,
-        selectedDate: s.selectedDate,
-        dayLog: s.dayLog,
-        customFoods: s.customFoods,
-        recentFoodIds: s.recentFoodIds,
-        dayLogsCache: s.dayLogsCache,
+        household:         s.household,
+        knownHouseholds:   s.knownHouseholds,
+        selectedDate:      s.selectedDate,
+        dayLog:            s.dayLog,
+        dayLogsCache:      s.dayLogsCache,
+        customFoods:       s.customFoods,
+        recentFoodCodes:   s.recentFoodCodes,
       }),
     }
   )

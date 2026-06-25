@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Member, NutritionGoals } from "@/lib/types";
 import { useAppStore } from "@/lib/store";
 import { deriveInitials, AVATAR_COLORS } from "@/lib/foods";
-import { X, Check, ChevronDown, ChevronUp, Copy, RefreshCw, Loader2 } from "lucide-react";
+import { X, Check, ChevronDown, ChevronUp, Copy, RefreshCw, Loader2, Home } from "lucide-react";
+import HouseholdManager from "@/components/HouseholdManager";
 
 interface Props {
   onClose: () => void;
@@ -20,6 +21,7 @@ export default function SettingsSheet({ onClose }: Props) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showHouseholds, setShowHouseholds] = useState(false);
 
   function updateMemberField(idx: number, field: keyof Member, value: string) {
     setMembers((prev) => {
@@ -130,6 +132,30 @@ export default function SettingsSheet({ onClose }: Props) {
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <RefreshCw className="w-4 h-4" />}
             </button>
+          </div>
+
+          {/* Households section */}
+          <div className="border border-gray-100 rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setShowHouseholds(!showHouseholds)}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-white text-left"
+            >
+              <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
+                <Home className="w-4 h-4 text-violet-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-800">Households</div>
+                <div className="text-xs text-gray-400">Switch, create or join households</div>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showHouseholds ? "rotate-180" : ""}`} />
+            </button>
+            {showHouseholds && (
+              <div className="px-4 pb-4 border-t border-gray-50">
+                <div className="mt-3">
+                  <HouseholdManager onClose={onClose} />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Household name */}

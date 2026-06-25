@@ -24,7 +24,7 @@ export default function Home() {
     stopLogging,
     markMemberDone,
     getMemberNutrition,
-    loadCustomFoods,
+    loadFoods,
     showSummary,
     setShowSummary,
   } = useAppStore();
@@ -40,7 +40,7 @@ export default function Home() {
   // Load custom foods once household is set up
   useEffect(() => {
     if (household.onboardingComplete && household.householdId) {
-      loadCustomFoods();
+      loadFoods();
     }
   }, [household.onboardingComplete, household.householdId]);
 
