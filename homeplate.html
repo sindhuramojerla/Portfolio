@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomePlate — Product Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #fdf9f5;
+  --surface:  #ffffff;
+  --border:   rgba(0,0,0,0.08);
+  --bdr-md:   rgba(0,0,0,0.13);
+  --text:     #1e1a2e;
+  --text-mid: #4a4560;
+  --muted:    #8a86a0;
+  --sage:     #6b5b7f;
+  --sage-lt:  #ede6f5;
+  --mint:     #0d9488;
+  --mint-lt:  #f0fdfa;
+  --orange:   #e8503a;
+  --orange-lt:#fff1ee;
+  --tag-bg:   #ede9e0;
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+}
+
+/* NAV */
+.nav{
+  background:var(--sage);
+  padding:0 3rem;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.nav-back{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:rgba(255,255,255,0.85);
+  text-decoration:none;transition:color .2s;
+}
+.nav-back:hover{color:#fff}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5}
+.nav-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)}
+
+/* HERO */
+.hero{
+  background:linear-gradient(135deg,#ffd1c8 0%,#ffe8f0 50%,#f0e5ff 100%);
+  padding:5rem 3rem 4rem;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,0.2) 1px,transparent 1px);
+  background-size:20px 20px;pointer-events:none;
+}
+.hero-inner{max-width:860px;margin:0 auto;position:relative}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  color:#a0486a;background:rgba(255,255,255,0.8);
+  border:1px solid rgba(160,72,106,0.3);
+  padding:4px 12px;border-radius:4px;margin-bottom:1.5rem;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.2rem,5vw,3.5rem);
+  font-weight:700;color:#1e1a2e;letter-spacing:-.03em;
+  line-height:1.1;margin-bottom:1rem;
+}
+.hero-title span{color:#e8503a}
+.hero-subtitle{
+  font-size:16px;font-weight:300;color:#3a3655;
+  max-width:600px;line-height:1.8;margin-bottom:2.5rem;
+}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:3rem}
+.chip{font-size:11px;padding:4px 11px;border-radius:20px;font-weight:400}
+.chip-coral {background:var(--orange-lt);color:var(--orange);border:1px solid rgba(232,80,58,0.2)}
+.chip-mint  {background:var(--mint-lt); color:var(--mint);  border:1px solid rgba(13,148,136,0.2)}
+.chip-dim   {background:rgba(255,255,255,0.6);color:var(--text-mid);border:1px solid rgba(0,0,0,0.1)}
+.hero-stats{
+  display:flex;gap:3rem;flex-wrap:wrap;
+  padding-top:2rem;border-top:1px solid rgba(30,26,46,0.15);
+}
+.stat-num{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;color:#e8503a;line-height:1}
+.stat-label{font-size:11px;color:#5a5675;margin-top:3px;letter-spacing:.03em}
+
+/* CONTENT */
+.content{max-width:860px;margin:0 auto;padding:4rem 3rem 6rem;position:relative;z-index:1}
+
+/* SECTIONS */
+.cs-section{margin-bottom:4rem}
+.cs-eyebrow{font-size:10px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--sage);margin-bottom:.5rem}
+.cs-heading{
+  font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;
+  letter-spacing:-.02em;color:var(--text);margin-bottom:1.25rem;line-height:1.2;
+}
+.cs-body{font-size:15px;font-weight:300;color:var(--text-mid);line-height:1.85;margin-bottom:1rem}
+
+.divider{height:1px;background:var(--bdr-md);margin:3rem 0}
+
+/* HIGHLIGHT BOX */
+.hbox{
+  background:var(--orange-lt);border:1px solid rgba(232,80,58,0.2);
+  border-left:3px solid var(--orange);
+  border-radius:8px;padding:1.5rem 1.75rem;margin:1.5rem 0;
+}
+.hbox-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:.6rem}
+.hbox-text{font-size:15px;font-weight:400;color:#8a503a;line-height:1.75;font-style:italic}
+
+/* GRIDS */
+.two-col  {display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.5rem 0}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+.card-icon{font-size:24px;margin-bottom:.8rem}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:.6rem}
+.card-body{font-size:13px;font-weight:300;color:var(--muted);line-height:1.7}
+
+/* COMPARISON TABLE */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+.comp-col{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.75rem}
+.comp-title{
+  font-size:14px;font-weight:700;color:var(--text);
+  margin-bottom:1.2rem;padding-bottom:.8rem;border-bottom:2px solid var(--border);
+}
+.comp-item{font-size:13px;color:var(--text-mid);margin-bottom:.75rem;line-height:1.6}
+.comp-item strong{color:var(--text);font-weight:600}
+
+/* FLOW */
+.flow{
+  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  margin:2rem 0;padding:1.5rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;
+}
+.flow-step{
+  display:flex;align-items:center;gap:.75rem;
+  font-size:13px;color:var(--text-mid);
+}
+.flow-arrow{color:var(--orange);font-weight:700;opacity:.6}
+
+/* UNITS TABLE */
+.units-table{margin:1.5rem 0;width:100%}
+.units-table th{
+  background:var(--sage-lt);color:var(--sage);
+  padding:.75rem 1rem;text-align:left;font-weight:600;font-size:12px;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.units-table td{
+  padding:1rem;border-bottom:1px solid var(--border);font-size:13px;
+}
+.units-table tr:last-child td{border-bottom:none}
+.units-table .cat{color:var(--text);font-weight:600}
+.units-table .units{color:var(--text-mid);font-size:12px}
+
+/* TIMELINE */
+.timeline{margin:1.5rem 0}
+.timeline-item{
+  padding:1.2rem 0;padding-left:2.5rem;
+  border-left:2px solid var(--border);
+  position:relative;margin-left:.75rem;
+}
+.timeline-item:last-child{border-left:none}
+.timeline-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--orange);
+  position:absolute;left:-6px;top:1.5rem;
+}
+.timeline-label{
+  font-size:12px;font-weight:600;color:var(--sage);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;
+}
+.timeline-text{font-size:13px;color:var(--text-mid)}
+
+/* DECISION BLOCK */
+.decision{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.5rem;margin:1rem 0;
+}
+.decision-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.decision-body{font-size:13px;color:var(--text-mid);line-height:1.7}
+
+/* SCREENSHOT PLACEHOLDER */
+.screenshot{
+  background:linear-gradient(135deg,#f5f0ff,#fff1ee);
+  border:2px dashed var(--border);
+  border-radius:12px;padding:3rem;text-align:center;
+  margin:2rem 0;
+}
+.screenshot-text{
+  font-size:14px;color:var(--muted);
+  font-style:italic;
+}
+
+/* TOOLS SECTION */
+.tools-list{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:1rem;margin:1.5rem 0;
+}
+.tool-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.25rem;text-align:center;
+}
+.tool-icon{font-size:28px;margin-bottom:.5rem}
+.tool-name{font-size:13px;font-weight:600;color:var(--text)}
+
+/* STATUS */
+.status-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;
+}
+.status-col{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+.status-header{
+  font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--border);
+}
+.status-item{
+  font-size:13px;color:var(--text-mid);
+  margin-bottom:.75rem;line-height:1.6;
+  padding-left:1.5rem;position:relative;
+}
+.status-item::before{
+  content:'✓';
+  position:absolute;left:0;color:var(--mint);font-weight:700;
+}
+.status-item.deferred::before{content:'⏳';color:#d97706}
+
+/* LEARNINGS */
+.learnings{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;
+}
+.learning-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+.learning-num{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:700;color:var(--orange);margin-bottom:.5rem;
+}
+.learning-text{font-size:13px;color:var(--text-mid);line-height:1.75}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav{padding:0 1.5rem}
+  .hero{padding:3rem 1.5rem 2.5rem}
+  .content{padding:2.5rem 1.5rem 4rem}
+  .two-col, .comp-grid, .learnings{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr 1fr}
+  .hero-stats{flex-direction:column;gap:1.5rem}
+  .flow{flex-direction:column;gap:0}
+  .flow-step{width:100%}
+  .flow-arrow{display:none}
+}
+
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav-back">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Back</span>
+  </a>
+  <span class="nav-title">HomePlate</span>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Product Case Study</div>
+    <h1 class="hero-title">Home<span>Plate</span></h1>
+    <p class="hero-subtitle">Shared nutrition tracking for two people who eat homemade Indian meals together. Log one dish, assign separate portions and track individual calorie and macro goals.</p>
+    <div class="hero-chips">
+      <span class="chip chip-coral">Working MVP</span>
+      <span class="chip chip-mint">Private Beta</span>
+      <span class="chip chip-dim">Product Strategy</span>
+      <span class="chip chip-dim">AI-assisted Build</span>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">2</div>
+        <div class="stat-label">Household Members</div>
+      </div>
+      <div>
+        <div class="stat-num">20+</div>
+        <div class="stat-label">Homemade Foods</div>
+      </div>
+      <div>
+        <div class="stat-num">10</div>
+        <div class="stat-label">Serving Unit Types</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="content">
+
+<!-- THE PROBLEM -->
+<div class="cs-section">
+  <div class="cs-eyebrow">The Problem</div>
+  <h2 class="cs-heading">Existing calorie trackers don't fit homemade Indian meals</h2>
+  <p class="cs-body">When my husband and I wanted to track nutrition consistently, every existing app made it inconvenient:</p>
+</div>
+
+<div class="two-col">
+  <div class="comp-col">
+    <div class="comp-title">❌ Existing Trackers</div>
+    <div class="comp-item"><strong>Individual-first.</strong> Solo users, no household sharing</div>
+    <div class="comp-item"><strong>Generic portions.</strong> Cups, ounces, grams — not katoris</div>
+    <div class="comp-item"><strong>Missing regional food.</strong> Tomato dal, bottle gourd curry not in database</div>
+    <div class="comp-item"><strong>Duplicate logging.</strong> If we eat the same meal, we log it twice</div>
+    <div class="comp-item"><strong>Invisible preparation.</strong> Oil level, added ingredients ignored</div>
+  </div>
+  <div class="comp-col">
+    <div class="comp-title">✓ HomePlate</div>
+    <div class="comp-item"><strong>Household-first.</strong> Two members, shared data, separate goals</div>
+    <div class="comp-item"><strong>Food-specific units.</strong> Katori for curry, pieces for eggs, scoops for protein</div>
+    <div class="comp-item"><strong>Homemade focus.</strong> Regional South Indian meals and local varieties</div>
+    <div class="comp-item"><strong>Log once, portion twice.</strong> Configure dish, assign each person's quantity</div>
+    <div class="comp-item"><strong>Preparation options.</strong> Oil level (85%–118%), optional additions</div>
+  </div>
+</div>
+
+<div class="hbox">
+  <div class="hbox-label">Core Insight</div>
+  <div class="hbox-text">The challenge was not only finding calorie values. It was representing how food is prepared, measured and shared at home.</div>
+</div>
+
+<!-- TARGET USER -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Target User</div>
+  <h2 class="cs-heading">Couples eating homemade meals together with different goals</h2>
+  <p class="cs-body">Two people who:</p>
+  <ul style="margin-left:1.5rem;color:var(--text-mid);font-size:15px;line-height:1.85">
+    <li style="margin-bottom:.5rem">Eat at least one home-cooked meal together most days</li>
+    <li style="margin-bottom:.5rem">Have different calorie or macro targets</li>
+    <li style="margin-bottom:.5rem">Cook with Indian ingredients and regional varieties</li>
+    <li style="margin-bottom:.5rem">Want to log from separate devices and see shared data</li>
+    <li style="margin-bottom:.5rem">Find existing trackers too repetitive to use consistently</li>
+  </ul>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">How It Works</div>
+  <h2 class="cs-heading">The shared meal logging flow</h2>
+  <div class="flow">
+    <div class="flow-step">Choose meal</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">One or both?</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Search or create</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Set prep options</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Assign portions</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Review nutrition</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Add to diary</div>
+  </div>
+</div>
+
+<!-- PRODUCT DECISIONS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Product Decisions</div>
+  <h2 class="cs-heading">Seven deliberate choices that shaped the product</h2>
+</div>
+
+<div class="decision">
+  <div class="decision-title">1. Configurable household profiles</div>
+  <div class="decision-body">Instead of a solo tracker, every user starts by creating a household with two members. Each member has a name, avatar color and separate nutrition goals. This makes sharing the primary model, not an afterthought.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">2. Shared dish with separate portions</div>
+  <div class="decision-body">When logging a meal, users select "Both" and assign different quantities to each person. This creates two diary entries linked to the same source, avoiding duplicate work while preserving individual nutrition tracking.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">3. Food-specific serving units</div>
+  <div class="decision-body">Instead of forcing all foods into grams or cups, each food defines which units make sense: curries use katori/cup/gram; eggs use pieces; protein powder uses scoops/grams. This eliminates mental math and makes logging faster.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">4. Approximate estimates with transparent labels</div>
+  <div class="decision-body">Homemade food values are labeled as "approximate" with source notes (NIN India, USDA, recipe estimation). Users understand the values are reasonable approximations, not precise measurements. This builds trust without false precision.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">5. Manual food creation over comprehensive database</div>
+  <div class="decision-body">Instead of trying to build a 100K-food database, users can quickly create custom foods or quick-enter just calories. This avoids the friction of searching and reduces FOMO about missing foods.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">6. Cloud-backed shared data via Supabase</div>
+  <div class="decision-body">Household data lives on the cloud. Both members can access the same diary from different devices. No syncing issues, no local-storage conflicts, no data loss if a device is lost.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">7. Authentication and household privacy</div>
+  <div class="decision-body">Only household members can see household data, enforced by Row-Level Security (RLS) at the database level. This is not optional; it's built into every query.</div>
+</div>
+
+<!-- SERVING UNITS COMPLEXITY -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Serving Units Architecture</div>
+  <h2 class="cs-heading">The complexity of representing how food is measured at home</h2>
+  <p class="cs-body">Different foods are measured in different units. The app supports this by storing each food's allowed units and gram equivalent:</p>
+</div>
+
+<table class="units-table">
+  <thead>
+    <tr>
+      <th>Food Category</th>
+      <th>Units</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="cat">Curries & dal</td>
+      <td class="units">katori, cup, gram</td>
+      <td style="font-size:12px;color:var(--muted)">1 katori ≈ 150g</td>
+    </tr>
+    <tr>
+      <td class="cat">Eggs, dosa, idli</td>
+      <td class="units">pieces</td>
+      <td style="font-size:12px;color:var(--muted)">1 piece varies</td>
+    </tr>
+    <tr>
+      <td class="cat">Drinks & soups</td>
+      <td class="units">ml, cup</td>
+      <td style="font-size:12px;color:var(--muted)">1 cup ≈ 240ml</td>
+    </tr>
+    <tr>
+      <td class="cat">Meat & fish</td>
+      <td class="units">gram, piece</td>
+      <td style="font-size:12px;color:var(--muted)">100g breast ≈ 1 piece</td>
+    </tr>
+    <tr>
+      <td class="cat">Bread & toast</td>
+      <td class="units">slice</td>
+      <td style="font-size:12px;color:var(--muted)">1 slice ≈ 30g</td>
+    </tr>
+    <tr>
+      <td class="cat">Protein powder</td>
+      <td class="units">scoop, gram</td>
+      <td style="font-size:12px;color:var(--muted)">1 scoop ≈ 30g (varies)</td>
+    </tr>
+    <tr>
+      <td class="cat">Fruits</td>
+      <td class="units">piece, cup, gram</td>
+      <td style="font-size:12px;color:var(--muted)">Food-specific</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="cs-body" style="margin-top:1.5rem">This flexibility is essential. Without it, users either guess or abandon tracking.</p>
+
+<!-- PRODUCT EVOLUTION -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Product Evolution</div>
+  <h2 class="cs-heading">From generic tracker to household-first platform</h2>
+</div>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">Phase 1</div>
+    <div class="timeline-text">Generic calorie tracker with fixed units</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">Phase 2</div>
+    <div class="timeline-text">Couples-first workflow: two members, shared meals</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">Phase 3</div>
+    <div class="timeline-text">Homemade Indian food focus with regional varieties</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">Phase 4</div>
+    <div class="timeline-text">Flexible serving units matched to food type</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">Phase 5</div>
+    <div class="timeline-text">Supabase backend with cloud sync and authentication</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">Phase 6</div>
+    <div class="timeline-text">Row-level security for multi-tenant data isolation</div>
+  </div>
+</div>
+
+<!-- SCREENS PLACEHOLDER -->
+<div class="cs-section">
+  <div class="cs-eyebrow">User Experience</div>
+  <h2 class="cs-heading">Key screens</h2>
+  <p class="cs-body">Screenshots showing household onboarding, daily diary, food search, shared meal flow, and nutrition summary.</p>
+</div>
+
+<div class="screenshot">
+  <div class="screenshot-text">🖼️ Screenshots placeholder — Household onboarding, Daily diary, Food search, Shared meal logging, Daily summary</div>
+</div>
+
+<!-- TOOLS & ARCHITECTURE -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Technical Stack</div>
+  <h2 class="cs-heading">Tools and architecture</h2>
+  <p class="cs-body">Built as a modern cloud-native web app with strong security and data isolation.</p>
+</div>
+
+<div class="tools-list">
+  <div class="tool-card">
+    <div class="tool-icon">⚛️</div>
+    <div class="tool-name">Next.js / React</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">📘</div>
+    <div class="tool-name">TypeScript</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">🎨</div>
+    <div class="tool-name">Tailwind CSS</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">🔐</div>
+    <div class="tool-name">Supabase Auth</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">🗄️</div>
+    <div class="tool-name">PostgreSQL</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">☁️</div>
+    <div class="tool-name">Vercel</div>
+  </div>
+</div>
+
+<!-- OWNERSHIP -->
+<div class="cs-section" style="margin-top:2.5rem">
+  <div class="hbox">
+    <div class="hbox-label">My Role</div>
+    <div class="hbox-text">I owned the problem definition, product requirements, prioritisation, user flows, acceptance criteria, data-model decisions, testing and iteration. AI-assisted development accelerated implementation.</div>
+  </div>
+</div>
+
+<!-- MVP vs PLANNED -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Feature Status</div>
+  <h2 class="cs-heading">What's built and what's planned</h2>
+</div>
+
+<div class="status-grid">
+  <div class="status-col">
+    <div class="status-header">✓ Built & Tested</div>
+    <div class="status-item">Two-member household setup</div>
+    <div class="status-item">Separate calorie & macro goals</div>
+    <div class="status-item">Daily meal diary (4 meals)</div>
+    <div class="status-item">Shared meal logging</div>
+    <div class="status-item">Food-specific serving units</div>
+    <div class="status-item">Manual food creation</div>
+    <div class="status-item">Oil-level & ingredient adjustments</div>
+    <div class="status-item">Date navigation</div>
+    <div class="status-item">Daily nutrition summary</div>
+    <div class="status-item">Supabase backend</div>
+    <div class="status-item">Email/password authentication</div>
+    <div class="status-item">Household privacy (RLS)</div>
+  </div>
+  <div class="status-col">
+    <div class="status-header">⏳ In Progress / Planned</div>
+    <div class="status-item deferred">Auth UI integration</div>
+    <div class="status-item deferred">Food catalogue seeding</div>
+    <div class="status-item deferred">Household food preferences</div>
+    <div class="status-item deferred">Recent foods shortcut</div>
+    <div class="status-item deferred">Weekly summary</div>
+    <div class="status-item deferred">Offline support</div>
+    <div class="status-item deferred">Barcode scanning</div>
+    <div class="status-item deferred">Recipe builder</div>
+    <div class="status-item deferred">Export data</div>
+    <div class="status-item deferred">Delete account</div>
+  </div>
+</div>
+
+<!-- BENEFITS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Benefits</div>
+  <h2 class="cs-heading">Why this matters</h2>
+</div>
+
+<div class="three-col">
+  <div class="card">
+    <div class="card-icon">⏱️</div>
+    <div class="card-title">Less duplicate work</div>
+    <div class="card-body">Log a shared meal once, assign portions to both members. No repeating entries.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🏠</div>
+    <div class="card-title">Represents home cooking</div>
+    <div class="card-body">Food-specific units match how meals are actually measured at home, not in a lab.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">📱</div>
+    <div class="card-title">Shared across devices</div>
+    <div class="card-body">Cloud-backed data means both members see the same diary from any device.</div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Current Status</div>
+  <h2 class="cs-heading">Working MVP in private beta</h2>
+  <p class="cs-body">The product has a working codebase with Supabase backend, authentication, and RLS security implemented. The core flows (household creation, shared meal logging, daily summary) are functional. The next phase is founder testing with 2–3 real households to validate core metrics (shared meals %, retention, logging speed) before any public launch.</p>
+</div>
+
+<!-- LEARNINGS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Key Learnings</div>
+  <h2 class="cs-heading">What this project taught me</h2>
+</div>
+
+<div class="learnings">
+  <div class="learning-card">
+    <div class="learning-num">1</div>
+    <div class="learning-text"><strong>Workflow differentiation matters more than feature novelty.</strong> Shared meal logging didn't require a new database structure—just a UI convention. But it solved a real pain point.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">2</div>
+    <div class="learning-text"><strong>Data architecture directly affects UX.</strong> Immutable diary snapshots (storing complete nutrition at logging time) prevented confusion about historical accuracy. Trade-off: simpler code, not perfect normalization.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">3</div>
+    <div class="learning-text"><strong>Transparent approximation builds trust.</strong> Labeling values as "approximate" with source notes is more useful than false precision. Users understand the limitations.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">4</div>
+    <div class="learning-text"><strong>Authentication and authorisation are separate requirements.</strong> Supabase Auth handles "who are you"; RLS handles "what data can you see." Don't conflate them.</div>
+  </div>
+</div>
+
+<!-- CALLOUT -->
+<div class="hbox" style="margin-top:3rem">
+  <div class="hbox-label">Next Phase</div>
+  <div class="hbox-text">Founder testing with real households to validate shared meal logging saves time, measure retention, and identify missing foods.</div>
+</div>
+
+</main>
+
+<footer style="text-align:center;padding:2rem;background:var(--surface);border-top:1px solid var(--border);color:var(--muted);font-size:12px">
+  <span>Sindhura Mojerla · 2026</span>
+</footer>
+
+</body>
+</html>

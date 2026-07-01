@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReportWise — Product Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #fdf9f5;
+  --surface:  #ffffff;
+  --border:   rgba(0,0,0,0.08);
+  --bdr-md:   rgba(0,0,0,0.13);
+  --text:     #1e1a2e;
+  --text-mid: #4a4560;
+  --muted:    #8a86a0;
+  --sage:     #6b5b7f;
+  --sage-lt:  #ede6f5;
+  --mint:     #0d9488;
+  --mint-lt:  #f0fdfa;
+  --orange:   #e8503a;
+  --orange-lt:#fff1ee;
+  --blue:     #3568d5;
+  --blue-lt:  #eef3ff;
+  --tag-bg:   #ede9e0;
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+}
+
+/* NAV */
+.nav{
+  background:var(--sage);
+  padding:0 3rem;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.nav-back{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:rgba(255,255,255,0.85);
+  text-decoration:none;transition:color .2s;
+}
+.nav-back:hover{color:#fff}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5}
+.nav-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6)}
+
+/* HERO */
+.hero{
+  background:linear-gradient(135deg,#dbeafe 0%,#e0f2fe 45%,#f0e5ff 100%);
+  padding:5rem 3rem 4rem;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,0.25) 1px,transparent 1px);
+  background-size:20px 20px;pointer-events:none;
+}
+.hero-inner{max-width:860px;margin:0 auto;position:relative}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  color:#1d3667;background:rgba(255,255,255,0.8);
+  border:1px solid rgba(29,54,103,0.3);
+  padding:4px 12px;border-radius:4px;margin-bottom:1.5rem;
+}
+.hero-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.2rem,5vw,3.5rem);
+  font-weight:700;color:#1e1a2e;letter-spacing:-.03em;
+  line-height:1.1;margin-bottom:1rem;
+}
+.hero-title span{color:var(--blue)}
+.hero-subtitle{
+  font-size:16px;font-weight:300;color:#3a3655;
+  max-width:600px;line-height:1.8;margin-bottom:2rem;
+}
+.hero-cta-row{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:2.5rem}
+.hero-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;text-decoration:none;
+  padding:10px 20px;border-radius:8px;transition:transform .15s,box-shadow .15s;
+}
+.hero-btn-primary{
+  background:var(--blue);color:#fff;
+  box-shadow:0 1px 3px rgba(53,104,213,.25),0 4px 12px rgba(53,104,213,.2);
+}
+.hero-btn-primary:hover{transform:translateY(-1px);box-shadow:0 2px 5px rgba(53,104,213,.3),0 8px 16px rgba(53,104,213,.25)}
+.hero-btn-arrow{font-size:14px}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:3rem}
+.chip{font-size:11px;padding:4px 11px;border-radius:20px;font-weight:400}
+.chip-blue {background:var(--blue-lt);color:var(--blue);border:1px solid rgba(53,104,213,0.2)}
+.chip-mint {background:var(--mint-lt);color:var(--mint);border:1px solid rgba(13,148,136,0.2)}
+.chip-dim  {background:rgba(255,255,255,0.6);color:var(--text-mid);border:1px solid rgba(0,0,0,0.1)}
+.hero-stats{
+  display:flex;gap:3rem;flex-wrap:wrap;
+  padding-top:2rem;border-top:1px solid rgba(30,26,46,0.15);
+}
+.stat-num{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:700;color:var(--blue);line-height:1}
+.stat-label{font-size:11px;color:#5a5675;margin-top:3px;letter-spacing:.03em}
+
+/* CONTENT */
+.content{max-width:860px;margin:0 auto;padding:4rem 3rem 6rem;position:relative;z-index:1}
+
+/* SECTIONS */
+.cs-section{margin-bottom:4rem}
+.cs-eyebrow{font-size:10px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--sage);margin-bottom:.5rem}
+.cs-heading{
+  font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;
+  letter-spacing:-.02em;color:var(--text);margin-bottom:1.25rem;line-height:1.2;
+}
+.cs-body{font-size:15px;font-weight:300;color:var(--text-mid);line-height:1.85;margin-bottom:1rem}
+
+.divider{height:1px;background:var(--bdr-md);margin:3rem 0}
+
+/* HIGHLIGHT BOX */
+.hbox{
+  background:var(--blue-lt);border:1px solid rgba(53,104,213,0.2);
+  border-left:3px solid var(--blue);
+  border-radius:8px;padding:1.5rem 1.75rem;margin:1.5rem 0;
+}
+.hbox-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:.6rem}
+.hbox-text{font-size:15px;font-weight:400;color:#1d3667;line-height:1.75;font-style:italic}
+
+/* GRIDS */
+.two-col  {display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.5rem 0}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+.card-icon{font-size:24px;margin-bottom:.8rem}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:.6rem}
+.card-body{font-size:13px;font-weight:300;color:var(--muted);line-height:1.7}
+
+/* COMPARISON TABLE */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+.comp-col{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.75rem}
+.comp-title{
+  font-size:14px;font-weight:700;color:var(--text);
+  margin-bottom:1.2rem;padding-bottom:.8rem;border-bottom:2px solid var(--border);
+}
+.comp-item{font-size:13px;color:var(--text-mid);margin-bottom:.75rem;line-height:1.6}
+.comp-item strong{color:var(--text);font-weight:600}
+
+/* FLOW */
+.flow{
+  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  margin:2rem 0;padding:1.5rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;
+}
+.flow-step{
+  display:flex;align-items:center;gap:.75rem;
+  font-size:13px;color:var(--text-mid);
+}
+.flow-arrow{color:var(--blue);font-weight:700;opacity:.6}
+
+/* TIMELINE */
+.timeline{margin:1.5rem 0}
+.timeline-item{
+  padding:1.2rem 0;padding-left:2.5rem;
+  border-left:2px solid var(--border);
+  position:relative;margin-left:.75rem;
+}
+.timeline-item:last-child{border-left:none}
+.timeline-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--blue);
+  position:absolute;left:-6px;top:1.5rem;
+}
+.timeline-label{
+  font-size:12px;font-weight:600;color:var(--sage);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;
+}
+.timeline-text{font-size:13px;color:var(--text-mid)}
+
+/* DECISION BLOCK */
+.decision{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.5rem;margin:1rem 0;
+}
+.decision-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:.5rem}
+.decision-body{font-size:13px;color:var(--text-mid);line-height:1.7}
+
+/* ARCHITECTURE DIAGRAM */
+.arch-diag{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.75rem;margin:1.5rem 0;
+}
+.arch-row{
+  display:grid;grid-template-columns:140px 1fr;gap:1rem;align-items:start;
+  padding:.8rem 0;border-bottom:1px solid var(--border);
+}
+.arch-row:last-child{border-bottom:none}
+.arch-layer{
+  font-size:11px;font-weight:700;color:var(--blue);
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.arch-detail{font-size:13px;color:var(--text-mid);line-height:1.7}
+.arch-detail strong{color:var(--text);font-weight:600}
+
+/* SECURITY GRID */
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.sec-card{
+  background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--mint);
+  border-radius:10px;padding:1.25rem 1.4rem;
+}
+.sec-card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:.4rem}
+.sec-card-body{font-size:12.5px;color:var(--text-mid);line-height:1.65}
+
+/* TOOLS */
+.tools-list{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:1rem;margin:1.5rem 0;
+}
+.tool-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1.25rem;text-align:center;
+}
+.tool-icon{font-size:28px;margin-bottom:.5rem}
+.tool-name{font-size:13px;font-weight:600;color:var(--text)}
+.tool-role{font-size:11px;color:var(--muted);margin-top:.3rem}
+
+/* STATUS */
+.status-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;
+}
+.status-col{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+.status-header{
+  font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid var(--border);
+}
+.status-item{
+  font-size:13px;color:var(--text-mid);
+  margin-bottom:.75rem;line-height:1.6;
+  padding-left:1.5rem;position:relative;
+}
+.status-item::before{
+  content:'✓';
+  position:absolute;left:0;color:var(--mint);font-weight:700;
+}
+.status-item.deferred::before{content:'⏳';color:#d97706}
+
+/* LEARNINGS */
+.learnings{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;
+}
+.learning-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem}
+.learning-num{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:700;color:var(--blue);margin-bottom:.5rem;
+}
+.learning-text{font-size:13px;color:var(--text-mid);line-height:1.75}
+
+/* PHASE PIPELINE */
+.phase-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin:1.5rem 0;
+}
+.phase-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:1rem .85rem;text-align:center;position:relative;
+}
+.phase-num{
+  width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  margin:0 auto .5rem;
+}
+.phase-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:.3rem;line-height:1.3}
+.phase-body{font-size:11px;color:var(--muted);line-height:1.55}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav{padding:0 1.5rem}
+  .hero{padding:3rem 1.5rem 2.5rem}
+  .content{padding:2.5rem 1.5rem 4rem}
+  .two-col, .comp-grid, .learnings, .sec-grid{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr 1fr}
+  .hero-stats{flex-direction:column;gap:1.5rem}
+  .flow{flex-direction:column;gap:0}
+  .flow-step{width:100%}
+  .flow-arrow{display:none}
+  .arch-row{grid-template-columns:1fr;gap:.3rem}
+  .arch-layer{margin-bottom:.2rem}
+  .phase-grid{grid-template-columns:1fr 1fr}
+}
+
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav-back">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    <span>Back</span>
+  </a>
+  <span class="nav-title">ReportWise</span>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">Report<span>Wise</span></h1>
+    <p class="hero-subtitle">A consumer health tool that reads any lab-report PDF, flags values outside the printed reference range and explains them in plain language. Built as a working prototype to explore how AI can make medical reports easier to understand without crossing into diagnosis.</p>
+    <div class="hero-cta-row">
+      <a href="https://reportwise.vercel.app" target="_blank" rel="noopener" class="hero-btn hero-btn-primary">
+        View Live Product <span class="hero-btn-arrow">↗</span>
+      </a>
+    </div>
+    <div class="hero-chips">
+      <span class="chip chip-blue">Working Prototype</span>
+      <span class="chip chip-mint">Deployed on Vercel</span>
+      <span class="chip chip-dim">Consumer Health</span>
+      <span class="chip chip-dim">AI-assisted Build</span>
+      <span class="chip chip-dim">5 Languages</span>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">5</div>
+        <div class="stat-label">Build Phases</div>
+      </div>
+      <div>
+        <div class="stat-num">42</div>
+        <div class="stat-label">Automated Tests</div>
+      </div>
+      <div>
+        <div class="stat-num">10+</div>
+        <div class="stat-label">Health Categories</div>
+      </div>
+      <div>
+        <div class="stat-num">5</div>
+        <div class="stat-label">Languages Supported</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="content">
+
+<!-- THE PROBLEM -->
+<div class="cs-section">
+  <div class="cs-eyebrow">The Problem</div>
+  <h2 class="cs-heading">Lab reports are written for doctors, not for the people they belong to</h2>
+  <p class="cs-body">When most people receive a blood test report, they see a wall of acronyms (LDL, HbA1c, TSH), numbers with units, and reference ranges in tiny print. The same value that says "high" on one report says "borderline" on another lab. Patients often wait days for their doctor to translate what is otherwise unreadable.</p>
+</div>
+
+<div class="two-col">
+  <div class="comp-col">
+    <div class="comp-title">❌ Current Experience</div>
+    <div class="comp-item"><strong>Dense, technical layout.</strong> Tables of acronyms with no explanation</div>
+    <div class="comp-item"><strong>Reference ranges vary by lab.</strong> Same value, different verdicts</div>
+    <div class="comp-item"><strong>No prioritisation.</strong> 30 normal values get the same visual weight as one out-of-range value</div>
+    <div class="comp-item"><strong>English only.</strong> A barrier for parents and elders who read better in Hindi or a regional language</div>
+    <div class="comp-item"><strong>One-shot view.</strong> Hard to compare against last year's report</div>
+  </div>
+  <div class="comp-col">
+    <div class="comp-title">✓ ReportWise</div>
+    <div class="comp-item"><strong>Plain-language dashboard.</strong> Each flagged marker explained in one sentence</div>
+    <div class="comp-item"><strong>Uses the report's own range.</strong> No external thresholds — comparisons stay honest</div>
+    <div class="comp-item"><strong>Triage by attention.</strong> Out-of-range markers surfaced first, normals grouped quietly</div>
+    <div class="comp-item"><strong>Five languages.</strong> English, Hindi, Telugu, Kannada, Tamil</div>
+    <div class="comp-item"><strong>Compare two reports.</strong> See whether each marker moved toward or away from the range</div>
+  </div>
+</div>
+
+<div class="hbox">
+  <div class="hbox-label">Core Insight</div>
+  <div class="hbox-text">The hardest part was not the AI — it was deciding what the product would refuse to do. No diagnosis. No medicine recommendations. No symptom matching. The product explains; it does not interpret.</div>
+</div>
+
+<!-- PRODUCT HYPOTHESIS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Product Hypothesis</div>
+  <h2 class="cs-heading">If we can extract structured data from any lab PDF, plain-language explanations can be safe and useful</h2>
+  <p class="cs-body">Multimodal AI is now strong enough to read varied PDF layouts and return clean structured data. If that piece works reliably, the rest of the product — flagging, explanations, multilingual UI, comparison — becomes a thin layer on top. The hypothesis was that this layer, kept small and clearly bounded, could be genuinely useful without straying into clinical advice.</p>
+</div>
+
+<!-- TARGET USER -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Target User</div>
+  <h2 class="cs-heading">Adults trying to understand a lab report for themselves or a family member</h2>
+  <p class="cs-body">A non-clinical reader who:</p>
+  <ul style="margin-left:1.5rem;color:var(--text-mid);font-size:15px;line-height:1.85">
+    <li style="margin-bottom:.5rem">Just received a routine blood test, annual check-up or pre-employment screening</li>
+    <li style="margin-bottom:.5rem">Wants to know what is worth raising at the next doctor visit, not a diagnosis</li>
+    <li style="margin-bottom:.5rem">Often reads reports on behalf of a parent or older family member</li>
+    <li style="margin-bottom:.5rem">Prefers a regional language for explanations even if the lab report itself is in English</li>
+    <li style="margin-bottom:.5rem">May have an older report to compare against</li>
+  </ul>
+</div>
+
+<!-- MVP SCOPE -->
+<div class="cs-section">
+  <div class="cs-eyebrow">MVP Scope</div>
+  <h2 class="cs-heading">Two flows. PDF only. Nothing stored.</h2>
+  <p class="cs-body">The scope was deliberately small so each piece could be built carefully.</p>
+</div>
+
+<div class="status-grid">
+  <div class="status-col">
+    <div class="status-header">✓ In Scope</div>
+    <div class="status-item">Analyse one report (single PDF upload)</div>
+    <div class="status-item">Compare two reports (earlier vs recent)</div>
+    <div class="status-item">PDF only — 3 MB max, 25 pages max</div>
+    <div class="status-item">Read every marker against the report's own range</div>
+    <div class="status-item">Plain-language explanation per flagged marker</div>
+    <div class="status-item">Group by health area (Heart, Liver, Kidney, etc.)</div>
+    <div class="status-item">Doctor-question list</div>
+    <div class="status-item">5-language UI</div>
+    <div class="status-item">Session-only data; no storage</div>
+  </div>
+  <div class="status-col">
+    <div class="status-header">⏳ Explicitly Excluded</div>
+    <div class="status-item deferred">Scanned PDFs and photos</div>
+    <div class="status-item deferred">Image-based reports</div>
+    <div class="status-item deferred">Disease names or diagnoses</div>
+    <div class="status-item deferred">Medicine, supplement or dosage suggestions</div>
+    <div class="status-item deferred">Symptom matching</div>
+    <div class="status-item deferred">Long-term storage or accounts</div>
+    <div class="status-item deferred">Sharing or social features</div>
+    <div class="status-item deferred">Doctor connection / telehealth</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">How It Works</div>
+  <h2 class="cs-heading">The flow a user actually sees</h2>
+  <div class="flow">
+    <div class="flow-step">Upload PDF</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Bot check</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Validate file</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Extract markers</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Flag &amp; explain</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Dashboard</div>
+  </div>
+  <p class="cs-body" style="margin-top:1rem">The user picks a PDF, solves an invisible Cloudflare bot challenge (usually no interaction needed), and the server validates the file before any AI call. Markers are extracted as structured JSON, "high/low/normal" is computed in the app itself against the printed range, and explanations are layered in afterwards in batches.</p>
+</div>
+
+<!-- KEY PRODUCT DECISIONS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Key Product Decisions</div>
+  <h2 class="cs-heading">Seven calls that shaped the product</h2>
+</div>
+
+<div class="decision">
+  <div class="decision-title">1. Use the report's own reference range, never an external one</div>
+  <div class="decision-body">Labs in different cities use different ranges. A value of 49 mg/dL is "low" on one report and "normal" on another. ReportWise uses only what is printed on the uploaded PDF — this avoids any pretence of clinical judgement and keeps the product honest.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">2. Explain, do not interpret</div>
+  <div class="decision-body">Every explanation answers "what does this test measure?" — never "what disease does this point to?". The system prompt forbids diagnoses, disease names, and medicine or supplement advice.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">3. Triage UI: flagged first, normal collapsed</div>
+  <div class="decision-body">Out-of-range markers appear as full cards at the top. Normal values are grouped into health-area panels that stay collapsed until tapped. The user's attention is steered to what is worth a conversation with their doctor.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">4. Compute high/low/normal in app code, not in the AI response</div>
+  <div class="decision-body">The AI returns the raw value, unit and printed range. The app does the arithmetic and the classification. This removes a class of "the AI got the verdict wrong" bugs and makes the logic auditable.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">5. Five languages, but marker names stay in English</div>
+  <div class="decision-body">Test names like "Hemoglobin", units like "mg/dL", and reference ranges are never translated — they must match the printed report. Only labels, explanations, doctor questions and the safety note translate.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">6. Detect duplicate uploads before Compare runs</div>
+  <div class="decision-body">If the user uploads the same PDF twice into Compare, the app detects it after extraction (same date + ≥85% identical values) and warns them instead of producing a useless "no change" dashboard.</div>
+</div>
+
+<div class="decision">
+  <div class="decision-title">7. No accounts, no storage, no retention</div>
+  <div class="decision-body">The product never persists the file, the extracted markers, or the patient name. Each session is independent. This kept the privacy story simple enough to explain in one line on the upload screen.</div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Architecture</div>
+  <h2 class="cs-heading">A static front end and a single serverless function</h2>
+  <p class="cs-body">The whole product runs on Vercel's free tier. The browser holds the UI; one serverless function holds every secret and gate.</p>
+</div>
+
+<div class="arch-diag">
+  <div class="arch-row">
+    <div class="arch-layer">Browser</div>
+    <div class="arch-detail"><strong>Static HTML, CSS and vanilla JS.</strong> Renders the upload screen, dashboard, comparison view, and the Cloudflare Turnstile widget. Never sees any API key.</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-layer">Edge headers</div>
+    <div class="arch-detail"><strong>CSP, HSTS, frame-ancestors, Permissions-Policy.</strong> Locked down so only Cloudflare's iframe, Google Fonts and our own origin can load resources.</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-layer">Serverless API</div>
+    <div class="arch-detail"><strong>One function: /api/messages.</strong> Runs every gate in sequence: kill switch → origin allowlist → Content-Type → Turnstile verification → PDF validation → rate-limit check → AI call → response sanitisation.</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-layer">Bot verification</div>
+    <div class="arch-detail"><strong>Cloudflare Turnstile.</strong> Verified server-side before any quota is consumed. Free, invisible for trusted users.</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-layer">Rate limiting</div>
+    <div class="arch-detail"><strong>Upstash Redis (free tier).</strong> Atomic Lua scripts handle four counters, an active-request lock and an idempotency key in one round trip. Roughly two Redis commands per analysis.</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-layer">AI</div>
+    <div class="arch-detail"><strong>Google Gemini (multimodal).</strong> Reads the PDF directly, returns structured JSON. Falls back from Flash Lite to Flash automatically when the cheaper model is overloaded.</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-layer">Storage</div>
+    <div class="arch-detail"><strong>None.</strong> No database. No object storage. Files exist in memory for the duration of one request.</div>
+  </div>
+</div>
+
+<!-- SECURITY -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Security and Privacy</div>
+  <h2 class="cs-heading">Defence in layers</h2>
+  <p class="cs-body">Health-adjacent products attract abuse: bots probing for API keys, attackers uploading malicious files, prompt-injection attempts hidden inside PDF text. The product treats every layer as suspect and validates accordingly.</p>
+</div>
+
+<div class="sec-grid">
+  <div class="sec-card">
+    <div class="sec-card-title">🔒 API key protection</div>
+    <div class="sec-card-body">All AI calls go through a server function. The Gemini key lives only in Vercel's environment variables and is never sent to the browser.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">📄 Hard PDF validation</div>
+    <div class="sec-card-body">Server checks %PDF magic bytes, EOF marker, file size, page count and refuses encrypted PDFs — before any AI call.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">⚡ Rate limits</div>
+    <div class="sec-card-body">2 per 15 min, 5 per hour, 10 per day per IP. Compare counts as 2 credits. A global daily cap protects against runaway cost.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">🤖 Bot verification</div>
+    <div class="sec-card-body">Cloudflare Turnstile verified server-side before quota is consumed. Invisible for trusted users, blocks scripted abuse.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">🧱 Prompt-injection shield</div>
+    <div class="sec-card-body">A security preamble is prepended to every PDF call telling the model to treat PDF contents as untrusted data, never instructions.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">🧼 Response sanitisation</div>
+    <div class="sec-card-body">The AI's reply is parsed against a strict schema. HTML tags, control characters and unknown status values are stripped before render.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">🛑 Kill switch</div>
+    <div class="sec-card-body">A single environment variable disables analysis instantly without redeploying the front end.</div>
+  </div>
+  <div class="sec-card">
+    <div class="sec-card-title">🔍 Safe logging</div>
+    <div class="sec-card-body">No PDF contents, patient data, marker values or full AI responses ever reach the logs. IPs are hashed before storage.</div>
+  </div>
+</div>
+
+<div class="hbox" style="margin-top:1.5rem">
+  <div class="hbox-label">Fail-Closed in Production</div>
+  <div class="hbox-text">If Upstash or Turnstile environment variables are missing in production, the API refuses every request with a 503 instead of silently allowing unprotected traffic. The opposite default of most deployments.</div>
+</div>
+
+<!-- TOOLS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Tools Used</div>
+  <h2 class="cs-heading">A small, free stack</h2>
+</div>
+
+<div class="tools-list">
+  <div class="tool-card">
+    <div class="tool-icon">📄</div>
+    <div class="tool-name">Plain HTML + JS</div>
+    <div class="tool-role">No framework</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">▲</div>
+    <div class="tool-name">Vercel</div>
+    <div class="tool-role">Static + functions</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">✨</div>
+    <div class="tool-name">Google Gemini</div>
+    <div class="tool-role">PDF reading</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">⚡</div>
+    <div class="tool-name">Upstash Redis</div>
+    <div class="tool-role">Rate limits</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">🛡️</div>
+    <div class="tool-name">Cloudflare Turnstile</div>
+    <div class="tool-role">Bot check</div>
+  </div>
+  <div class="tool-card">
+    <div class="tool-icon">🧪</div>
+    <div class="tool-name">Node test runner</div>
+    <div class="tool-role">42 tests</div>
+  </div>
+</div>
+
+<!-- BUILD PHASES -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Testing and Iteration</div>
+  <h2 class="cs-heading">Built in five named phases</h2>
+  <p class="cs-body">Rather than building everything at once, each phase ended with verifiable tests before the next began.</p>
+</div>
+
+<div class="phase-grid">
+  <div class="phase-card">
+    <div class="phase-num">1</div>
+    <div class="phase-title">Working prototype</div>
+    <div class="phase-body">Front end + AI extraction</div>
+  </div>
+  <div class="phase-card">
+    <div class="phase-num">2</div>
+    <div class="phase-title">Serverless port</div>
+    <div class="phase-body">Vercel-compatible function</div>
+  </div>
+  <div class="phase-card">
+    <div class="phase-num">3</div>
+    <div class="phase-title">Input validation</div>
+    <div class="phase-body">PDF + response sanitisation</div>
+  </div>
+  <div class="phase-card">
+    <div class="phase-num">4</div>
+    <div class="phase-title">Abuse protection</div>
+    <div class="phase-body">Redis + Turnstile + limits</div>
+  </div>
+  <div class="phase-card">
+    <div class="phase-num">5</div>
+    <div class="phase-title">Headers + tests</div>
+    <div class="phase-body">CSP, HSTS, 42 tests</div>
+  </div>
+</div>
+
+<p class="cs-body" style="margin-top:1.5rem">By Phase 5, the codebase had 42 automated tests covering PDF validation, response sanitisation, rate limits, origin allowlists, security headers, and prompt-injection attempts. Manual smoke tests against the deployed Vercel URL confirmed every gate behaved correctly with real HTTP traffic.</p>
+
+<!-- MY ROLE -->
+<div class="cs-section" style="margin-top:2.5rem">
+  <div class="hbox">
+    <div class="hbox-label">My Role</div>
+    <div class="hbox-text">I owned product scoping, the explicit "this is not a medical device" framing, prioritisation across five build phases, the security model, the multilingual scope, the design of the comparison flow, and decisions about what the product would refuse to do. AI-assisted development was used for implementation; the product calls were mine.</div>
+  </div>
+</div>
+
+<!-- OUTCOME -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Outcome</div>
+  <h2 class="cs-heading">A working public prototype</h2>
+  <p class="cs-body">ReportWise is deployed at <strong>reportwise.vercel.app</strong> with all security layers active. Five build phases shipped, 42 automated tests passing, and the full pipeline (Turnstile → validation → rate limits → AI → sanitisation) runs end-to-end on a real lab-report PDF in roughly 5–10 seconds.</p>
+</div>
+
+<div class="three-col">
+  <div class="card">
+    <div class="card-icon">⚙️</div>
+    <div class="card-title">End-to-end working</div>
+    <div class="card-body">From PDF upload to dashboard, including comparison flow with two reports.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🌐</div>
+    <div class="card-title">5 languages live</div>
+    <div class="card-body">UI labels and AI explanations switch on demand; cached per session.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🛡️</div>
+    <div class="card-title">Hardened for public access</div>
+    <div class="card-body">Rate-limited, bot-checked, schema-validated and CSP-locked.</div>
+  </div>
+</div>
+
+<!-- WHAT I WOULD BUILD NEXT -->
+<div class="cs-section">
+  <div class="cs-eyebrow">What I Would Build Next</div>
+  <h2 class="cs-heading">If this moved beyond a prototype</h2>
+</div>
+
+<div class="learnings">
+  <div class="learning-card">
+    <div class="learning-num">1</div>
+    <div class="learning-text"><strong>Marker history with consented storage.</strong> Optional account that stores extracted markers (not the PDF) so users can see trends across years. Encrypted at rest, deletable any time.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">2</div>
+    <div class="learning-text"><strong>Doctor-share view.</strong> A one-click clean view designed for the patient to show their doctor on a phone screen — flagged markers first, with the original PDF available for download.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">3</div>
+    <div class="learning-text"><strong>Scanned-PDF support.</strong> An OCR pass for older or photographed reports, with an explicit "lower-confidence" tag so users know not to trust the values blindly.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">4</div>
+    <div class="learning-text"><strong>Caregiver mode.</strong> Many users read reports for an elderly parent. A simple two-profile setup (you and one elder) would match how the product is actually used.</div>
+  </div>
+</div>
+
+<!-- LEARNINGS -->
+<div class="cs-section">
+  <div class="cs-eyebrow">Key Learnings</div>
+  <h2 class="cs-heading">What this project taught me</h2>
+</div>
+
+<div class="learnings">
+  <div class="learning-card">
+    <div class="learning-num">A</div>
+    <div class="learning-text"><strong>Scope discipline is a product skill.</strong> Saying no to "but what if it also suggests medicine" was harder than saying yes. Every refused feature made the security and safety story possible.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">B</div>
+    <div class="learning-text"><strong>Treat the AI as one component, not the product.</strong> Building reliable validation around the model — both before and after — turned a fragile prototype into something that fails gracefully when the AI fails.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">C</div>
+    <div class="learning-text"><strong>Free-tier limits force good architecture.</strong> Designing around Upstash's 10k commands/day budget pushed the rate-limit logic into a single Lua script — cleaner than the naive multi-command version.</div>
+  </div>
+  <div class="learning-card">
+    <div class="learning-num">D</div>
+    <div class="learning-text"><strong>Fail-closed is a product decision.</strong> Defaulting to "block the request" when a config is missing protects users at the cost of making the operator (me) more careful at deploy. Right trade-off for a health tool.</div>
+  </div>
+</div>
+
+<!-- SAFETY -->
+<div class="hbox" style="margin-top:3rem">
+  <div class="hbox-label">Important Note</div>
+  <div class="hbox-text">ReportWise is a prototype built to explore product, security and design questions — not a medical device. It does not diagnose, prescribe or replace professional advice.</div>
+</div>
+
+</main>
+
+<footer style="text-align:center;padding:2rem;background:var(--surface);border-top:1px solid var(--border);color:var(--muted);font-size:12px">
+  <span>Sindhura Mojerla · 2026</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Razorpay Payment Pages — Product Analysis · Sindhura Mojerla</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Razorpay palette */
+  --rzp-navy:   #012652;
+  --rzp-blue:   #0D94FB;
+  --rzp-blue-lt:#e6f4fe;
+  --rzp-mid:    #1a4a8a;
+
+  /* page palette */
+  --bg:         #f2f5f9;   /* cool blue-white — neutral, not cream */
+  --surface:    #ffffff;
+  --surface2:   #eaf1f8;
+  --ink:        #0d1b2e;
+  --ink-mid:    #3a4a5e;
+  --ink-lt:     #7a8fa8;
+  --border:     rgba(1,38,82,0.1);
+  --border-md:  rgba(1,38,82,0.16);
+
+  --green:      #0e6e42;
+  --green-lt:   #e6f5ee;
+  --amber:      #a05c00;
+  --amber-lt:   #fef3e2;
+  --red:        #c0392b;
+  --red-lt:     #fdecea;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:54px;background:rgba(242,245,249,0.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;
+}
+.nav-back{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:400;color:var(--ink-lt);
+  text-decoration:none;transition:color .15s;letter-spacing:.02em;
+}
+.nav-back:hover{color:var(--ink)}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-chip{
+  font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 11px;border-radius:20px;
+  background:var(--rzp-blue-lt);color:var(--rzp-navy);
+}
+
+/* HERO */
+.hero{
+  padding-top:54px;
+  background:var(--rzp-navy);
+  position:relative;overflow:hidden;
+  min-height:82vh;
+  display:flex;flex-direction:column;justify-content:flex-end;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(13,148,251,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(13,148,251,.06) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.hero-glow{
+  position:absolute;top:5%;right:-5%;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(13,148,251,.14) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-inner{
+  position:relative;z-index:1;
+  padding:3rem 3rem 3.5rem;
+  max-width:960px;
+}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.75rem}
+.htag{
+  font-size:10px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;
+}
+.ht1{background:rgba(13,148,251,.18);color:#7dc9fd}
+.ht2{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+
+h1{
+  font-family:'Fraunces',serif;
+  font-size:clamp(2.1rem,4.8vw,3.4rem);
+  font-weight:800;line-height:1.13;
+  color:#fff;letter-spacing:-.025em;
+  margin-bottom:1.25rem;max-width:800px;
+}
+h1 .accent{
+  font-style:italic;font-weight:600;
+  color:var(--rzp-blue);
+}
+.hero-deck{
+  font-size:15.5px;font-weight:300;line-height:1.75;
+  color:rgba(255,255,255,.58);max-width:580px;margin-bottom:2.5rem;
+}
+.stat-row{
+  display:flex;gap:0;flex-wrap:wrap;
+  border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  width:fit-content;overflow:hidden;
+}
+.sr-item{padding:.85rem 1.6rem;border-right:1px solid rgba(255,255,255,.1)}
+.sr-item:last-child{border-right:none}
+.sr-n{
+  font-family:'Fraunces',serif;font-size:1.5rem;font-weight:800;
+  color:#fff;line-height:1;margin-bottom:2px;
+}
+.sr-l{font-size:10px;font-weight:300;letter-spacing:.05em;color:rgba(255,255,255,.38);text-transform:uppercase}
+
+/* CONTENT */
+.page{max-width:800px;margin:0 auto;padding:0 2.5rem 5rem}
+
+.block{padding:3.5rem 0;border-bottom:1px solid var(--border)}
+.block:last-child{border-bottom:none}
+
+.blabel{
+  display:flex;align-items:center;gap:10px;
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--rzp-mid);margin-bottom:1.1rem;
+}
+.blabel::before{content:'';width:20px;height:2px;background:var(--rzp-blue);border-radius:2px;flex-shrink:0}
+.bnum{font-weight:300;font-style:italic;color:var(--ink-lt);margin-left:auto;font-family:'Fraunces',serif;font-size:11px}
+
+h2{
+  font-family:'Fraunces',serif;
+  font-size:clamp(1.35rem,3vw,1.8rem);
+  font-weight:600;line-height:1.2;
+  color:var(--ink);margin-bottom:1rem;letter-spacing:-.018em;
+}
+h2 em{font-weight:300;font-style:italic;color:var(--ink-mid)}
+
+p{font-size:14.5px;font-weight:300;line-height:1.85;color:var(--ink-mid)}
+p+p{margin-top:.85rem}
+
+/* CALLOUT — CEO quote */
+.callout-blue{
+  margin:2rem 0;
+  background:var(--rzp-navy);
+  border-radius:14px;padding:1.75rem 2rem;
+  position:relative;overflow:hidden;
+}
+.callout-blue::after{
+  content:'\201C';
+  position:absolute;right:16px;top:-24px;
+  font-family:'Fraunces',serif;font-size:160px;font-weight:800;
+  color:rgba(255,255,255,.04);line-height:1;pointer-events:none;
+}
+.cb-text{
+  font-family:'Fraunces',serif;
+  font-size:1.1rem;font-style:italic;font-weight:400;
+  color:rgba(255,255,255,.88);line-height:1.65;margin-bottom:.75rem;
+}
+.cb-attr{
+  font-size:11px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;
+  color:rgba(255,255,255,.38);
+}
+.cb-src{color:var(--rzp-blue);text-decoration:none;font-size:10px;margin-left:6px}
+.cb-src:hover{text-decoration:underline}
+
+/* STAT GRID */
+.sgrid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  margin:1.75rem 0;
+  background:var(--border-md);border-radius:12px;overflow:hidden;
+}
+.sg-item{
+  background:var(--surface);padding:1.1rem 1.2rem;
+}
+.sg-n{
+  font-family:'Fraunces',serif;font-size:1.7rem;font-weight:800;
+  color:var(--rzp-navy);line-height:1;margin-bottom:3px;
+}
+.sg-l{font-size:11px;font-weight:300;color:var(--ink-lt);line-height:1.4}
+.sg-src{font-size:9.5px;color:var(--ink-lt);margin-top:4px;display:block;font-style:italic}
+
+/* FINDING CARDS */
+.finding{
+  display:grid;grid-template-columns:3px 1fr;gap:12px;
+  margin:.9rem 0;border-radius:8px;overflow:hidden;
+}
+.finding-bar{border-radius:2px}
+.finding.f-obs  .finding-bar{background:var(--rzp-blue)}
+.finding.f-gap  .finding-bar{background:var(--amber)}
+.finding.f-good .finding-bar{background:var(--green)}
+.finding-body{
+  background:var(--surface);
+  padding:1rem 1.1rem;border-radius:0 8px 8px 0;
+  border:1px solid var(--border);border-left:none;
+}
+.ft{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;line-height:1.3}
+.fd{font-size:12.5px;font-weight:300;color:var(--ink-mid);line-height:1.6}
+
+/* REVIEW ANALYSIS */
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:1.5rem 0}
+@media(max-width:540px){.rev-grid{grid-template-columns:1fr}}
+.rev-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.2rem;
+}
+.rc-label{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:.6rem}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:.45rem}
+.bar-bg{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-pct{font-size:11px;font-weight:500;color:var(--ink);width:32px;text-align:right;flex-shrink:0}
+.rc-note{font-size:12px;font-weight:300;color:var(--ink-lt);line-height:1.55}
+.rc-zero{
+  font-family:'Fraunces',serif;font-size:1rem;font-weight:600;font-style:italic;
+  color:var(--rzp-navy);margin-bottom:.3rem;
+}
+.rc-src{font-size:10px;color:var(--ink-lt);font-style:italic;margin-top:.4rem;display:block}
+
+/* TWO-COL COMPARE */
+.twocol{
+  display:grid;grid-template-columns:1fr 32px 1fr;gap:0;margin:1.75rem 0;align-items:stretch;
+}
+.tc-col{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.3rem;
+}
+.tc-mid{display:flex;align-items:center;justify-content:center;color:var(--rzp-blue);font-size:18px;opacity:.4}
+.tc-head{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:.7rem}
+.tc-title{font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:.6rem;line-height:1.25}
+.tc-items{list-style:none;display:flex;flex-direction:column;gap:5px}
+.tc-items li{
+  font-size:12px;font-weight:300;color:var(--ink-mid);line-height:1.4;
+  display:flex;align-items:flex-start;gap:6px;
+}
+.tc-items li::before{flex-shrink:0;margin-top:1px;font-size:11px}
+.tc-items li.has::before{content:'●';color:var(--rzp-blue);font-size:7px;margin-top:4px}
+.tc-items li.miss::before{content:'○';color:var(--border-md);font-size:7px;margin-top:4px}
+
+/* COMPARISON TABLE */
+.ctable{
+  width:100%;border-collapse:collapse;
+  margin:1.5rem 0;font-size:12.5px;
+  border:1px solid var(--border-md);border-radius:10px;overflow:hidden;
+}
+.ctable th{
+  background:var(--rzp-navy);color:rgba(255,255,255,.75);
+  padding:.65rem 1rem;text-align:left;
+  font-weight:500;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;
+}
+.ctable td{
+  padding:.7rem 1rem;border-top:1px solid var(--border);
+  font-weight:300;color:var(--ink-mid);vertical-align:top;line-height:1.5;
+  background:var(--surface);
+}
+.ctable tr:hover td{background:var(--surface2)}
+.c-good{color:var(--green);font-weight:400}
+.c-gap {color:var(--amber);font-weight:400}
+.c-na  {color:var(--ink-lt)}
+
+/* OPP LIST */
+.opp-list{border:1px solid var(--border-md);border-radius:12px;overflow:hidden;margin-top:1.5rem}
+.opp-item{
+  display:grid;grid-template-columns:52px 1fr;
+  border-bottom:1px solid var(--border);background:var(--surface);
+  transition:background .15s;
+}
+.opp-item:last-child{border-bottom:none}
+.opp-item:hover{background:var(--surface2)}
+.opp-n-col{
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:1.25rem 0 0;
+}
+.opp-n{
+  font-family:'Fraunces',serif;font-size:1.4rem;font-weight:800;font-style:italic;
+  color:var(--rzp-navy);opacity:.2;line-height:1;
+}
+.opp-body{padding:1.2rem 1.2rem 1.2rem 0}
+.opp-t{font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:.4rem;line-height:1.3}
+.opp-d{font-size:12.5px;font-weight:300;color:var(--ink-mid);line-height:1.65}
+.opp-pill{
+  display:inline-block;margin-top:.6rem;
+  font-size:9.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 10px;border-radius:20px;
+}
+.p-now  {background:var(--rzp-blue-lt);color:var(--rzp-navy)}
+.p-near {background:var(--amber-lt);color:var(--amber)}
+
+/* METRICS */
+.m3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1.5rem 0}
+@media(max-width:560px){.m3{grid-template-columns:1fr 1fr}}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:1rem 1.1rem}
+.mc-l{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:.4rem}
+.mc-v{font-size:13px;font-weight:400;color:var(--ink);line-height:1.5}
+
+/* SUMMARY */
+.summary{
+  margin:2.5rem 0 0;
+  background:var(--rzp-navy);
+  border-radius:14px;padding:2rem 2.25rem;
+  position:relative;overflow:hidden;
+}
+.summary::before{
+  content:'';position:absolute;bottom:-50px;right:-50px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(13,148,251,.08);pointer-events:none;
+}
+.sum-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:.65rem}
+.sum-text{
+  font-family:'Fraunces',serif;font-size:1.1rem;font-weight:400;font-style:italic;
+  color:rgba(255,255,255,.88);line-height:1.7;max-width:650px;
+}
+
+/* REFERENCES */
+.refs{
+  margin-top:3rem;padding:1.75rem 2rem;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+}
+.refs-title{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-lt);margin-bottom:1rem;
+}
+.ref-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.ref-list li{
+  display:grid;grid-template-columns:18px 1fr;gap:6px;align-items:baseline;
+}
+.ref-n{font-size:10px;font-weight:500;color:var(--rzp-blue);flex-shrink:0}
+.ref-text{font-size:12px;font-weight:300;color:var(--ink-mid);line-height:1.5}
+.ref-text a{color:var(--rzp-mid);text-decoration:none;border-bottom:1px solid var(--border-md)}
+.ref-text a:hover{color:var(--rzp-blue);border-color:var(--rzp-blue)}
+
+/* FOOTER */
+footer{
+  padding:1.5rem 2.5rem;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11.5px;color:var(--ink-lt);font-weight:300;
+  background:var(--surface);
+}
+footer a{color:var(--ink-lt);text-decoration:none}
+footer a:hover{color:var(--ink)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.hero-inner>*{opacity:0;animation:fadeUp .65s ease both}
+.hero-tags{animation-delay:.1s}
+h1{animation-delay:.2s}
+.hero-deck{animation-delay:.28s}
+.stat-row{animation-delay:.36s}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:680px){
+  .twocol{grid-template-columns:1fr;grid-template-rows:1fr auto 1fr}
+  .tc-mid{transform:rotate(90deg)}
+  .sgrid{grid-template-columns:1fr 1fr}
+  .stat-row{flex-direction:column;width:100%}
+  .sr-item{border-right:none;border-bottom:1px solid rgba(255,255,255,.1)}
+  .sr-item:last-child{border-bottom:none}
+  .m3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-back">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Portfolio
+  </a>
+  <div class="nav-right">
+    <span class="nav-chip">Product Teardown</span>
+    <span style="font-size:11px;color:var(--ink-lt)">June 2026</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-tags">
+      <span class="htag ht1">Product Teardown</span>
+      <span class="htag ht2">Razorpay · Payment Pages</span>
+      <span class="htag ht2">First-hand research + public data</span>
+    </div>
+    <h1>Razorpay's path to a<br><span class="accent">financial OS for SMEs</span><br>starts with the storefront</h1>
+    <p class="hero-deck">Razorpay's CEO has publicly articulated an ambition to move beyond payments and become a full financial operating system for businesses. This analysis looks at one specific opportunity on that path: what Payment Pages needs to become in an AI-native world — and why the window to do it is a narrow one.</p>
+    <div class="stat-row">
+      <div class="sr-item">
+        <div class="sr-n">10M+</div>
+        <div class="sr-l">merchants on platform</div>
+      </div>
+      <div class="sr-item">
+        <div class="sr-n">54%</div>
+        <div class="sr-l">TPV from Tier 2/3 SMEs</div>
+      </div>
+      <div class="sr-item">
+        <div class="sr-n">78%</div>
+        <div class="sr-l">Indian SMBs sell on WhatsApp</div>
+      </div>
+      <div class="sr-item">
+        <div class="sr-n">2026</div>
+        <div class="sr-l">Shopify Magic already live</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- 01 RESEARCH METHOD -->
+<div class="block reveal">
+  <div class="blabel">Research approach <span class="bnum">01</span></div>
+  <h2>How this analysis was conducted</h2>
+  <p>This teardown draws on three sources, each with different signal types. No internal Razorpay data was available — all claims are either directly sourced from public statements and published research, or explicitly flagged as hypotheses.</p>
+
+  <div class="finding f-obs" style="margin-top:1.25rem">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">First-hand merchant onboarding</div>
+      <div class="fd">Signed up as an SME and went through the full Payment Pages setup — including KYC, business verification, and the product builder. Observations are based on direct experience of the flow.</div>
+    </div>
+  </div>
+  <div class="finding f-obs">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">Merchant review analysis</div>
+      <div class="fd">Read approximately 120 merchant reviews across Capterra, Trustpilot, and the Shopify App Store. Complaints were categorised by theme. The distribution of themes — and the notable absence of Payment Pages feedback — forms a key input into this analysis. [<a href="#refs" style="color:var(--rzp-mid);font-size:11px">see refs 4–6</a>]</div>
+    </div>
+  </div>
+  <div class="finding f-obs">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">Public statements and market data</div>
+      <div class="fd">CEO interview from March 2026 (Business Today), Razorpay's own published statistics, IAMAI Digital India data, and published research on Indian SMB commerce behaviour. All sourced in the references section.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 STATED AMBITION -->
+<div class="block reveal">
+  <div class="blabel">Strategic context <span class="bnum">02</span></div>
+  <h2>Razorpay's stated direction: from payment gateway to financial OS</h2>
+  <p>In March 2026, Razorpay's co-founder and CEO Harshil Mathur spoke publicly about the company's ambition to expand beyond its core payments business. This is the context in which Payment Pages becomes a strategically interesting product to examine — not as a standalone feature, but as a potential entry point into a much larger merchant relationship.</p>
+
+  <div class="callout-blue">
+    <p class="cb-text">"The idea is to evolve Razorpay beyond a payments provider into a financial operating system for businesses — with the biggest impact possible among SMEs, which often lack dedicated teams to manage even basic payment-related processes."</p>
+    <div class="cb-attr">Harshil Mathur, Co-founder &amp; CEO, Razorpay
+      <a href="https://www.businesstoday.in/latest/corporate/story/idea-is-to-evolve-razorpay-beyond-a-payments-provider-into-a-financial-operating-system-for-businesses-says-harshil-mathur-520358-2026-03-12" target="_blank" class="cb-src">[ref 1] ↗</a>
+    </div>
+  </div>
+
+  <p>The scale at which Razorpay operates makes the SME layer a meaningful strategic surface. Razorpay's merchant base grew from 350,000 in 2019 to over 10 million by 2023 — with a significant share of transaction volume coming from smaller merchants outside Tier 1 cities.</p>
+
+  <div class="sgrid">
+    <div class="sg-item">
+      <div class="sg-n">10M+</div>
+      <div class="sg-l">merchants on platform (2023)</div>
+      <span class="sg-src">[ref 2]</span>
+    </div>
+    <div class="sg-item">
+      <div class="sg-n">54%</div>
+      <div class="sg-l">of digital transaction volume from Tier 2/3 city SMEs</div>
+      <span class="sg-src">[ref 3]</span>
+    </div>
+    <div class="sg-item">
+      <div class="sg-n">$180B</div>
+      <div class="sg-l">annualised total payment volume (2024)</div>
+      <span class="sg-src">[ref 2]</span>
+    </div>
+  </div>
+
+  <p>The SME segment is not a future bet for Razorpay — it is the current majority of their volume. The question this analysis explores is whether the product experience that onboards and retains this segment reflects the stated strategic ambition.</p>
+</div>
+
+<!-- 03 REVIEW SIGNAL -->
+<div class="block reveal">
+  <div class="blabel">Merchant feedback analysis <span class="bnum">03</span></div>
+  <h2>What ~120 merchant reviews reveal</h2>
+  <p>Across approximately 120 reviews read on Capterra, Trustpilot, and the Shopify App Store, complaints cluster clearly around a small number of recurring themes. The distribution is worth noting — not just for what merchants highlight, but for what they do not.</p>
+
+  <div class="rev-grid">
+    <div class="rev-card">
+      <div class="rc-label">Settlement &amp; payout delays</div>
+      <div class="bar-row">
+        <div class="bar-bg"><div class="bar-fill" style="width:68%;background:#c0392b"></div></div>
+        <div class="bar-pct">~68%</div>
+      </div>
+      <div class="rc-note">Most frequently cited issue. Merchants report payments being held during compliance reviews, often without clear timelines.</div>
+      <span class="rc-src">[ref 4, 5]</span>
+    </div>
+    <div class="rev-card">
+      <div class="rc-label">Customer support responsiveness</div>
+      <div class="bar-row">
+        <div class="bar-bg"><div class="bar-fill" style="width:52%;background:#a05c00"></div></div>
+        <div class="bar-pct">~52%</div>
+      </div>
+      <div class="rc-note">Tickets routed between teams. Recurring complaint across platforms that issues escalate without resolution.</div>
+      <span class="rc-src">[ref 4, 5]</span>
+    </div>
+    <div class="rev-card">
+      <div class="rc-label">KYC and onboarding documentation</div>
+      <div class="bar-row">
+        <div class="bar-bg"><div class="bar-fill" style="width:38%;background:#a05c00"></div></div>
+        <div class="bar-pct">~38%</div>
+      </div>
+      <div class="rc-note">Documentation requirements described as extensive. Account approvals occasionally delayed or reversed without detailed explanation.</div>
+      <span class="rc-src">[ref 4, 5, 6]</span>
+    </div>
+    <div class="rev-card">
+      <div class="rc-zero">Near zero mentions</div>
+      <div class="rc-label">Payment Pages / storefront feature</div>
+      <div class="rc-note">Payment Pages generates almost no review feedback — positive or negative. This absence is informative: merchants who want a capable storefront are going elsewhere, while those who stay use it as a minimal checkout link.</div>
+      <span class="rc-src">[observed pattern across ref 4, 5, 6]</span>
+    </div>
+  </div>
+
+  <div class="finding f-gap">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">Hypothesis on the review signal</div>
+      <div class="fd">The near-absence of Payment Pages feedback suggests the feature is not currently competing in the space where merchants evaluate storefront products. Merchants building serious online stores appear to use Shopify or WooCommerce and treat Razorpay as the payment layer. The opportunity cost of this pattern is difficult to quantify from public data, but it represents a structural gap in how Razorpay captures SME value beyond the transaction.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 WHERE SMES SELL -->
+<div class="block reveal">
+  <div class="blabel">SME commerce behaviour <span class="bnum">04</span></div>
+  <h2>Where Indian SMEs actually sell today</h2>
+  <p>A meaningful proportion of Indian small sellers do not maintain a formal website. Their primary commerce channels are WhatsApp catalogues, Instagram product posts, and word-of-mouth referrals — with payment collected via UPI or a payment link sent through chat.</p>
+
+  <div class="sgrid" style="margin:1.75rem 0">
+    <div class="sg-item">
+      <div class="sg-n">78%</div>
+      <div class="sg-l">of Indian SMBs use WhatsApp for business</div>
+      <span class="sg-src">[ref 7]</span>
+    </div>
+    <div class="sg-item">
+      <div class="sg-n">$20B</div>
+      <div class="sg-l">projected Indian social commerce market by 2025</div>
+      <span class="sg-src">[ref 8]</span>
+    </div>
+    <div class="sg-item">
+      <div class="sg-n">40%+</div>
+      <div class="sg-l">conversion rate reported by D2C brands using WhatsApp catalogues</div>
+      <span class="sg-src">[ref 7]</span>
+    </div>
+  </div>
+
+  <p>This context matters for how Payment Pages is positioned. A product designed as a "website alternative for businesses without a website" is meeting a real need — but the current experience asks these sellers to step outside their existing channels rather than extending them. The gap between where sellers currently operate and where the product meets them is an activation friction point.</p>
+
+  <div class="twocol">
+    <div class="tc-col">
+      <div class="tc-head">Typical Indian SME today</div>
+      <div class="tc-title">Instagram + WhatsApp commerce</div>
+      <ul class="tc-items">
+        <li class="has">Product catalogue on WhatsApp Business</li>
+        <li class="has">Product photos on Instagram</li>
+        <li class="has">Orders via DM or phone call</li>
+        <li class="has">Payment via UPI or sent link</li>
+        <li class="miss">No unified checkout experience</li>
+        <li class="miss">No buyer trust signals</li>
+        <li class="miss">No analytics or order tracking</li>
+      </ul>
+    </div>
+    <div class="tc-mid">→</div>
+    <div class="tc-col">
+      <div class="tc-head">Where Payment Pages could go</div>
+      <div class="tc-title">AI-generated, channel-native storefront</div>
+      <ul class="tc-items">
+        <li class="has">Store generated from a one-line description</li>
+        <li class="has">Magic Checkout trust signal surfaced upfront</li>
+        <li class="has">WhatsApp catalogue auto-synced</li>
+        <li class="has">UPI-first, mobile-first by default</li>
+        <li class="has">Payment analytics built in from day one</li>
+        <li class="has">Localised for Tier 2/3 — Hindi, regional languages</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 05 PRODUCT OBSERVATIONS -->
+<div class="block reveal">
+  <div class="blabel">First-hand product observations <span class="bnum">05</span></div>
+  <h2>What the current onboarding experience looks like</h2>
+  <p>The following observations come from going through the SME sign-up and Payment Pages setup as a new merchant. These are product-level findings, not judgements about Razorpay's broader quality or engineering — the core payment infrastructure is clearly robust based on both usage and the review data above.</p>
+
+  <div class="finding f-gap" style="margin-top:1.25rem">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">Observation 1: Value preview is gated behind full KYC</div>
+      <div class="fd">Before a new merchant can see what their store will look like, the onboarding flow requires business type, GST details, bank account, and PAN. There is no sandbox or preview mode. Platforms like Shopify and Wix both allow merchants to build and preview a full store before entering payment or compliance details — deferring commitment until the product has demonstrated value. The current Razorpay flow inverts this sequence.</div>
+    </div>
+  </div>
+  <div class="finding f-gap">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">Observation 2: The builder is scoped to payment collection, not storefront creation</div>
+      <div class="fd">The Payment Pages builder surfaces fields for product name, image, and price. This is appropriate for its current positioning as a checkout-link tool — but it does not support the elements that drive conversion on a seller's first impression: brand identity, trust signals, delivery information, or an about section. The product is completing one job (collect payment) while leaving the adjacent job (earn buyer confidence) unaddressed.</div>
+    </div>
+  </div>
+  <div class="finding f-good">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">Observation 3: Magic Checkout is a strong and underutilised trust asset</div>
+      <div class="fd">As a repeat consumer across multiple D2C brands, Magic Checkout — prefilled address, saved card details, single-tap payment — is noticeably smoother than alternatives. Razorpay's stated network of 40 crore+ users with saved details is a genuine consumer trust asset. Currently, this trust signal activates only at the payment step. Surfacing it earlier in the buyer journey — at the storefront level, before a purchase decision — is an unrealised opportunity.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 06 COMPETITIVE -->
+<div class="block reveal">
+  <div class="blabel">Competitive context <span class="bnum">06</span></div>
+  <h2>Where the market has moved</h2>
+  <p>AI-generated storefront setup is no longer a product concept — it has shipped in the global market. The comparison below is not to suggest Razorpay should replicate these products, but to establish that the category exists and that the India-native version of it remains unbuilt.</p>
+
+  <table class="ctable">
+    <thead>
+      <tr>
+        <th>Platform</th>
+        <th>AI setup</th>
+        <th>India SME fit</th>
+        <th>Payment-first</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Shopify Magic</strong> <a href="https://www.jotform.com/ai/shopify-ai-website-builder/" target="_blank" style="font-size:10px;color:var(--rzp-mid)">[ref 9]</a></td>
+        <td class="c-good">Describe business → full storefront generated including layout and product copy</td>
+        <td class="c-gap">Global product. USD pricing. Not optimised for UPI or Tier 2/3 India merchants.</td>
+        <td class="c-gap">Razorpay integration is an add-on, not native</td>
+      </tr>
+      <tr>
+        <td><strong>Wix Aria</strong> <a href="https://www.wix.com/blog/how-to-use-ai-to-create-an-ecommerce-website" target="_blank" style="font-size:10px;color:var(--rzp-mid)">[ref 10]</a></td>
+        <td class="c-good">Conversational AI setup, brand kit auto-generated, mobile-optimised layout</td>
+        <td class="c-gap">Global product. No UPI-first checkout. INR pricing not primary.</td>
+        <td class="c-gap">Requires separate payment gateway integration</td>
+      </tr>
+      <tr>
+        <td><strong>Instamojo</strong></td>
+        <td class="c-gap">No-code store builder. Manual setup. No AI assistance currently.</td>
+        <td class="c-good">India-native. Built for freelancers and small sellers. Payment links central to the product.</td>
+        <td class="c-gap">Own payment gateway. Smaller merchant trust network than Razorpay.</td>
+      </tr>
+      <tr>
+        <td><strong>Razorpay Payment Pages</strong></td>
+        <td class="c-na">Manual setup. Product + price fields. No brand builder.</td>
+        <td class="c-good">India-native. UPI-first. Highest merchant trust network.</td>
+        <td class="c-good">Magic Checkout built in. Best-in-class at the payment moment.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="finding f-obs">
+    <div class="finding-bar"></div>
+    <div class="finding-body">
+      <div class="ft">The combination no competitor currently has</div>
+      <div class="fd">Shopify and Wix have AI storefront generation but are not India-native. Instamojo is India-native but does not have AI setup or Razorpay's trust network. Razorpay is the only player with a UPI-first payment infrastructure, a 40 crore+ consumer network with saved checkout details, and an existing relationship with 10M+ merchants. The India-specific, AI-native storefront product sits in a gap that none of these platforms currently fills.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 07 WHAT TO BUILD -->
+<div class="block reveal">
+  <div class="blabel">Product opportunities <span class="bnum">07</span></div>
+  <h2>Three directions worth exploring</h2>
+  <p>These are framed as hypotheses based on the observations above, not prescriptions. Each would require validation with actual merchant behaviour data that is not publicly available.</p>
+
+  <div class="opp-list">
+    <div class="opp-item">
+      <div class="opp-n-col"><div class="opp-n">1</div></div>
+      <div class="opp-body">
+        <div class="opp-t">AI-assisted store setup from a single prompt</div>
+        <div class="opp-d">Allow a merchant to describe their business in one or two sentences — what they sell, who their customers are, what price range — and generate a ready-to-publish Payment Page: brand colours, product description template, homepage copy, and category structure. Magic Checkout embedded by default. This mirrors what Shopify Magic has shipped globally, built around India's UPI context and Tier 2/3 price points.</div>
+        <span class="opp-pill p-now">High priority hypothesis</span>
+      </div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-n-col"><div class="opp-n">2</div></div>
+      <div class="opp-body">
+        <div class="opp-t">Surface Magic Checkout trust at the storefront, not only at checkout</div>
+        <div class="opp-d">When a buyer with saved Razorpay details lands on a Payment Page, displaying "Your details are saved — check out in one tap" before they add to cart converts the checkout trust into storefront confidence. This is a low-complexity change that makes Razorpay's largest consumer-facing moat visible at the moment it can most influence a purchase decision.</div>
+        <span class="opp-pill p-now">High priority hypothesis</span>
+      </div>
+    </div>
+    <div class="opp-item">
+      <div class="opp-n-col"><div class="opp-n">3</div></div>
+      <div class="opp-body">
+        <div class="opp-t">WhatsApp catalogue sync</div>
+        <div class="opp-d">Given that 78% of Indian SMBs already operate on WhatsApp Business, a Payment Page that auto-syncs to a seller's WhatsApp catalogue — and generates a shareable payment link per product — reduces the switching cost of adopting a new channel. The seller does not need to rebuild their catalogue; they extend it.</div>
+        <span class="opp-pill p-near">Medium priority hypothesis</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 08 METRICS -->
+<div class="block reveal">
+  <div class="blabel">Success metrics <span class="bnum">08</span></div>
+  <h2>How success would be measured</h2>
+  <p>If the above hypotheses were pursued, the following metrics would determine whether they're solving the right problem. These are not claimed outcomes — they're the indicators that would validate or invalidate the direction.</p>
+  <div class="m3">
+    <div class="mc">
+      <div class="mc-l">North star</div>
+      <div class="mc-v">% of newly activated merchants who make their first sale through a Razorpay-hosted storefront (rather than a standalone payment link)</div>
+    </div>
+    <div class="mc">
+      <div class="mc-l">Activation</div>
+      <div class="mc-v">Time from merchant sign-up to first live product page — target under 10 minutes with AI-assisted setup</div>
+    </div>
+    <div class="mc">
+      <div class="mc-l">Retention signal</div>
+      <div class="mc-v">Merchant retention at 30/60/90 days for storefront users vs. payment-link-only users — tests the LTV hypothesis</div>
+    </div>
+  </div>
+  <p>The underlying hypothesis is that merchants who invest in a storefront — even a minimal one — have higher long-term value than those using only payment links, because the storefront signals a sustained intent to sell rather than a one-time collection. If validated, improving storefront activation has a direct commercial rationale for Razorpay beyond feature completeness.</p>
+
+  <div class="summary">
+    <div class="sum-label">Summary</div>
+    <p class="sum-text">Razorpay's CEO has publicly described the ambition to become a financial operating system for Indian businesses. The SME segment already drives the majority of transaction volume. Payment Pages — the product most directly positioned as the storefront entry point for this segment — currently competes below its potential. In a market where AI-generated storefronts have shipped globally and 78% of Indian SMBs sell through WhatsApp, there is a specific, India-native version of this product that no competitor is currently positioned to build as credibly as Razorpay.</p>
+  </div>
+</div>
+
+<!-- 09 ROADMAP -->
+<div class="block reveal">
+  <div class="blabel">Product roadmap <span class="bnum">09</span></div>
+  <h2>A phased path from payment tool to merchant OS</h2>
+  <p>This roadmap is not a feature wishlist. It is a sequence of bets — each phase de-risks the next, and each one builds on Razorpay's existing moats rather than requiring new ones to be invented. The window is real but narrow: Dukaan is adding AI features, Shopify is deepening India investment, and Instamojo continues to iterate. The merchant who solves storefront setup in the next 12 months owns the SME relationship for the next five years.</p>
+
+  <!-- Why now -->
+  <div style="margin:2rem 0 1rem">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:1rem">Why the window is narrow</div>
+    <div class="m3" style="grid-template-columns:repeat(2,1fr)">
+      <div class="mc" style="border-left:3px solid var(--amber)">
+        <div class="mc-l" style="color:var(--amber)">Competitive threat</div>
+        <div class="mc-v">Dukaan is shipping AI store creation for Indian SMEs. First-mover in this category captures the merchant habit before Razorpay enters.</div>
+      </div>
+      <div class="mc" style="border-left:3px solid var(--amber)">
+        <div class="mc-l" style="color:var(--amber)">Shopify India push</div>
+        <div class="mc-v">Shopify is reducing friction for Indian merchants and exploring local payment partnerships. A direct Shopify-UPI integration removes Razorpay from the stack entirely.</div>
+      </div>
+      <div class="mc" style="border-left:3px solid var(--green)">
+        <div class="mc-l" style="color:var(--green)">Internal opportunity</div>
+        <div class="mc-v">10M+ merchants already on Razorpay with no storefront. That is uncaptured GMV sitting inside the existing merchant base — no acquisition cost required.</div>
+      </div>
+      <div class="mc" style="border-left:3px solid var(--green)">
+        <div class="mc-l" style="color:var(--green)">Network at critical mass</div>
+        <div class="mc-v">40 crore consumers with saved Magic Checkout details. This trust network is only valuable if it surfaces at the storefront. Every month without a storefront layer is a month that moat goes unused.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 1 -->
+  <div style="margin-top:2rem">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <div style="background:var(--rzp-blue-lt);color:var(--rzp-navy);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px">Phase 1 · 0–3 months</div>
+      <div style="font-size:12.5px;font-weight:400;color:var(--ink-lt)">Fix the floor — low complexity, high signal</div>
+    </div>
+    <div class="opp-list">
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">1</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Defer compliance gates — let merchants preview before KYC</div>
+          <div class="opp-d">Currently a new merchant cannot see what their Payment Page looks like without first submitting GST, PAN, and bank account. Shopify and Wix both allow a full store preview before any compliance step. Allow merchants to build and preview their page first — defer KYC to the moment they want to go live. Estimated impact: 20–30% improvement in onboarding completion rate based on SaaS benchmarks for deferred-commitment flows.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">2</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Surface Magic Checkout trust signal at the storefront</div>
+          <div class="opp-d">When a buyer with saved Razorpay details lands on a Payment Page, show a persistent badge: "Your details are saved — check out in one tap." This converts checkout-layer trust into storefront confidence before the purchase decision is made. Low engineering complexity — the user recognition already exists in the Magic Checkout system. This is the highest-leverage, lowest-effort change available.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">3</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Mobile-first UX audit on low-end Android devices</div>
+          <div class="opp-d">Tier 2/3 merchants — the stated strategic focus — primarily operate on Android devices under ₹12,000. The current Payment Pages setup flow has not been publicly validated on this hardware tier. A structured usability study with 8–10 merchants in this segment would surface the friction points that aggregate review data cannot. This is discovery work, not a shipped feature, but it informs everything that follows.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div style="margin-top:2rem">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <div style="background:rgba(13,148,251,0.12);color:var(--rzp-blue);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px">Phase 2 · 3–9 months</div>
+      <div style="font-size:12.5px;font-weight:400;color:var(--ink-lt)">Ship AI setup — the core bet</div>
+    </div>
+    <div class="opp-list">
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">4</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Prompt-to-storefront: describe your store, AI builds it</div>
+          <div class="opp-d">A merchant types or speaks two sentences — what they sell, who their customers are, what price range. Razorpay generates a complete Payment Page: brand colours, product description copy, homepage headline, and category structure. Magic Checkout embedded by default. Vernacular support from day one — Hindi, Tamil, Telugu. This is exactly what Shopify Magic has shipped globally. The India-native, UPI-first version of it remains unbuilt. Razorpay is the only player with the merchant trust and consumer network to win this.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">5</div></div>
+        <div class="opp-body">
+          <div class="opp-t">WhatsApp catalogue sync — extend, don't replace</div>
+          <div class="opp-d">78% of Indian SMBs already sell through WhatsApp Business. A Payment Page that auto-syncs to a seller's WhatsApp catalogue — and generates a shareable payment link per product — removes the biggest adoption barrier: sellers do not need to rebuild their catalogue, they extend it. The key insight is that WhatsApp is not a competitor to Payment Pages. It is the distribution channel. Razorpay can own both the store and the share link.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">6</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Razorpay-powered checkout as a differentiation signal</div>
+          <div class="opp-d">AI-generated pages should default to displaying the Magic Checkout badge prominently — not as a UI detail but as a conversion argument. "Checkout in one tap for 40 crore+ shoppers" is a genuine competitive moat that no India-native competitor can replicate. Position it as a feature of the storefront, not just the payment step.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div style="margin-top:2rem">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <div style="background:rgba(14,110,66,0.1);color:var(--green);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px">Phase 3 · 9–18 months</div>
+      <div style="font-size:12.5px;font-weight:400;color:var(--ink-lt)">Own the merchant relationship — the moat play</div>
+    </div>
+    <div class="opp-list">
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">7</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Merchant analytics: who is buying, when, and from where</div>
+          <div class="opp-d">A merchant using Payment Pages currently gets settlement data. They do not get buyer behaviour data — repeat purchase rate, top-selling SKUs, peak order times, geographic spread of buyers. This data already exists inside Razorpay's transaction layer. Surfacing it as a merchant dashboard inside Payment Pages creates a reason to stay that has nothing to do with the storefront UI itself. The data moat compounds over time.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">8</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Working capital offers triggered by storefront GMV</div>
+          <div class="opp-d">A merchant whose storefront is generating ₹5L/month in GMV through Razorpay is a creditworthy borrower with verified revenue data. Razorpay Capital already exists. The storefront layer makes the offer timing obvious — trigger a working capital pre-approval at GMV milestones (₹1L, ₹5L, ₹10L). This is the clearest path from "Payment Pages is a feature" to "Payment Pages is the entry point to a financial OS." The storefront becomes the relationship, not just the transaction.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col"><div class="opp-n">9</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Inventory and order management — reduce the tab count</div>
+          <div class="opp-d">A merchant running their business today has Payment Pages open in one tab, a WhatsApp Business window in another, a Google Sheet for inventory in a third, and a separate screen for settlements. The long-term product vision is that all of these collapse into one Razorpay storefront interface. Inventory sync and basic order management — even a simple sold/available toggle per SKU — eliminates the biggest operational complaint of SME sellers: context switching across too many tools.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risks -->
+  <div style="margin-top:2.5rem">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:1rem">Key risks and assumptions</div>
+    <div class="opp-list">
+      <div class="opp-item">
+        <div class="opp-n-col" style="min-width:2.5rem"><div class="opp-n" style="background:var(--red-lt);color:var(--red)">!</div></div>
+        <div class="opp-body">
+          <div class="opp-t">Merchants may not engage with storefronts if payment links work fine</div>
+          <div class="opp-d">The biggest assumption underlying this roadmap is that SME merchants want a storefront, not just a payment link. This is not proven. Phase 1 discovery work and the deferred-KYC experiment are designed to test this assumption before Phase 2 investment is committed.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col" style="min-width:2.5rem"><div class="opp-n" style="background:var(--red-lt);color:var(--red)">!</div></div>
+        <div class="opp-body">
+          <div class="opp-t">AI generation quality in vernacular languages is uneven</div>
+          <div class="opp-d">Hindi and Tamil prompts for business contexts are meaningfully weaker in current LLMs than English equivalents. Prompt-to-storefront quality in vernacular requires either fine-tuning on India SME data or careful prompt engineering with human-in-the-loop review for the first cohort. Shipping a poor vernacular experience is worse than not shipping it — it validates the perception that AI tools are not built for Indian businesses.</div>
+        </div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-n-col" style="min-width:2.5rem"><div class="opp-n" style="background:var(--red-lt);color:var(--red)">!</div></div>
+        <div class="opp-body">
+          <div class="opp-t">SME GTM is a different motion than Razorpay's existing enterprise GTM</div>
+          <div class="opp-d">Razorpay's growth has been driven by developer-led, API-first adoption and enterprise sales. SME storefront adoption requires a different playbook — influencer distribution, regional language marketing, WhatsApp-based onboarding support. This is not a product risk; it is a go-to-market risk that sits outside the product team but will determine whether Phase 2 achieves the activation numbers it needs to justify Phase 3.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCES -->
+<div class="block reveal" id="refs">
+  <div class="refs">
+    <div class="refs-title">Sources &amp; References</div>
+    <ul class="ref-list">
+      <li><div class="ref-n">1</div><div class="ref-text">Harshil Mathur, CEO interview — <a href="https://www.businesstoday.in/latest/corporate/story/idea-is-to-evolve-razorpay-beyond-a-payments-provider-into-a-financial-operating-system-for-businesses-says-harshil-mathur-520358-2026-03-12" target="_blank">Business Today, March 2026</a> — "Idea is to evolve Razorpay beyond a payments provider into a financial operating system"</div></li>
+      <li><div class="ref-n">2</div><div class="ref-text">Razorpay merchant base and TPV statistics — <a href="https://coinlaw.io/razorpay-statistics/" target="_blank">CoinLaw / Razorpay Statistics 2026</a>; original milestone announcements from Razorpay FTX event, February 2024</div></li>
+      <li><div class="ref-n">3</div><div class="ref-text">"Tier 2/3 city SMEs drive 54% of digital transaction volume" — <a href="https://coinlaw.io/razorpay-statistics/" target="_blank">CoinLaw Razorpay Statistics 2026</a></div></li>
+      <li><div class="ref-n">4</div><div class="ref-text">Merchant reviews — <a href="https://www.capterra.com/p/179263/Razorpay/reviews/" target="_blank">Capterra (111 reviews, overall 3.6/5)</a> — themes: settlement holds, support, KYC documentation</div></li>
+      <li><div class="ref-n">5</div><div class="ref-text">Merchant reviews — <a href="https://www.trustpilot.com/review/razorpay.com" target="_blank">Trustpilot (429 reviews)</a> — recurring themes: payment holds, support responsiveness</div></li>
+      <li><div class="ref-n">6</div><div class="ref-text">Shopify App Store reviews for Razorpay integrations — <a href="https://apps.shopify.com/affordability-widget/reviews" target="_blank">Shopify App Store</a> — integration reliability and support themes</div></li>
+      <li><div class="ref-n">7</div><div class="ref-text">"78% of Indian SMBs use WhatsApp for business; D2C brands report 40%+ conversion via WhatsApp catalogue" — <a href="https://hyperleap.ai/blog/whatsapp-statistics-india-2026" target="_blank">IAMAI Digital India Report 2026 via Hyperleap AI</a></div></li>
+      <li><div class="ref-n">8</div><div class="ref-text">Indian social commerce market projected at $20B by 2025 — <a href="https://sellerrocket.in/social-commerce-india-instagram-whatsapp-trends-2025.html" target="_blank">Seller Rocket / Industry Reports 2025</a></div></li>
+      <li><div class="ref-n">9</div><div class="ref-text">Shopify Magic AI storefront generation — <a href="https://www.jotform.com/ai/shopify-ai-website-builder/" target="_blank">Jotform — "Build smarter, not harder: AI website builders for Shopify, 2026"</a></div></li>
+      <li><div class="ref-n">10</div><div class="ref-text">Wix Aria AI storefront generation — <a href="https://www.wix.com/blog/how-to-use-ai-to-create-an-ecommerce-website" target="_blank">Wix Blog — "How to use AI to create an ecommerce website"</a></div></li>
+    </ul>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<footer>
+  <span>Sindhura Mojerla · Product Teardown · June 2026</span>
+  <a href="index.html">← Back to portfolio</a>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')})
+},{threshold:0.07});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
