@@ -342,14 +342,10 @@ export const useAppStore = create<AppState>()(
             console.log("✅ Household verified in Supabase");
 
             // 4. Add current user to household_memberships (CRITICAL for RLS)
-            const userId = get().currentUserId;
-            if (!userId) {
-              console.warn("⚠️ No currentUserId available - user not authenticated");
-            } else {
-              console.log("👤 Adding user to household membership...");
-              await ensureUserInHousehold(config.householdId, userId);
-              console.log("✅ User membership created");
-            }
+            // userId already defined at top of function
+            console.log("👤 Adding user to household membership...");
+            await ensureUserInHousehold(config.householdId, userId);
+            console.log("✅ User membership created");
 
             // 5. Track in knownHouseholds
             set((s) => {
