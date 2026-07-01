@@ -20,14 +20,16 @@ import {
   upsertHousehold,
   upsertDayLog,
   fetchDayLog,
-  fetchHouseholdByCode,
   fetchFoods,
   fetchHouseholdFoodPrefs,
   fetchCustomFoods,
   insertCustomFood,
   generateJoinCode,
-  recordMembership,
+  joinHouseholdWithCode,
+  fetchUserHouseholds,
+  supabase,
 } from "./supabase";
+import { onAuthStateChange, getCurrentSession } from "./auth";
 import { v4 as uuidv4 } from "uuid";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -67,14 +69,7 @@ export function sumNutrition(foods: LoggedFood[]): Nutrition {
   );
 }
 
-/** Stable device token — one UUID per browser, never changes */
-function getDeviceToken(): string {
-  if (typeof window === "undefined") return "ssr";
-  const key = "homeplate-device-token";
-  let token = localStorage.getItem(key);
-  if (!token) { token = uuidv4(); localStorage.setItem(key, token); }
-  return token;
-}
+// Device token system removed — using Supabase Auth instead
 
 const DEV_HOUSEHOLD: HouseholdConfig = {
   householdName: "Our Household",
@@ -98,6 +93,9 @@ interface SyncState {
 }
 
 interface AppState {
+  // ── Authentication ────────────────────────────────────────────────────────
+  currentUserId: string | null;  // Current authenticated user's UID, null if logged out
+
   // ── Household ─────────────────────────────────────────────────────────────
   household: HouseholdConfig;
   knownHouseholds: KnownHousehold[];  // all households this device has joined
@@ -158,6 +156,9 @@ interface AppState {
   // ── Sync ──────────────────────────────────────────────────────────────────
   pullLatest: (date?: string) => Promise<void>;
   resetDay: () => void;
+
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  initAuth: () => void;  // Set up auth state listener on app startup
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -186,6 +187,24 @@ export const useAppStore = create<AppState>()(
         catch { /* silent */ }
       }
 
+      /**
+       * When a household is first created, add the current user to household_memberships.
+       * This allows RLS policies to grant the user access to the household.
+       */
+      async function ensureUserInHousehold(householdId: string, userId: string) {
+        try {
+          const { error } = await supabase
+            .from("household_memberships")
+            .upsert(
+              { household_id: householdId, member_id: userId },
+              { onConflict: "household_id,member_id" }
+            );
+          if (error) console.error("Failed to add user to household_memberships:", error);
+        } catch (e) {
+          console.error("ensureUserInHousehold error:", e);
+        }
+      }
+
       function mutateDayLog(updater: (day: DayLog) => DayLog) {
         set((state) => {
           const date    = state.selectedDate;
@@ -212,13 +231,10 @@ export const useAppStore = create<AppState>()(
         }
       }
 
-      /** Record membership in Supabase (best-effort, non-blocking) */
-      function trackMembership(householdId: string, memberId: string) {
-        const token = getDeviceToken();
-        recordMembership(householdId, token, memberId).catch(() => {});
-      }
+      // Membership is now handled via Supabase Auth RPC (no device token tracking)
 
       return {
+        currentUserId: null,
         household: DEV_HOUSEHOLD,
         knownHouseholds: [],
         selectedDate: todayKey(),
@@ -238,6 +254,13 @@ export const useAppStore = create<AppState>()(
         saveHousehold: async (config) => {
           set({ household: config });
           await pushHousehold(config);
+
+          // Add current user to household_memberships (required for RLS)
+          const userId = get().currentUserId;
+          if (userId) {
+            await ensureUserInHousehold(config.householdId, userId);
+          }
+
           // Track in knownHouseholds
           set((s) => {
             const entry: KnownHousehold = {
@@ -251,26 +274,35 @@ export const useAppStore = create<AppState>()(
             );
             return { knownHouseholds: [entry, ...others] };
           });
-          trackMembership(config.householdId, config.members[0]?.id ?? "");
         },
 
         joinHousehold: async (joinCode) => {
           set((s) => ({ sync: { ...s.sync, syncing: true, syncError: null } }));
           try {
-            const row = await fetchHouseholdByCode(joinCode);
-            if (!row) {
+            // Call secure RPC to join household (adds to household_memberships)
+            const result = await joinHouseholdWithCode(joinCode);
+            if (!result.success || !result.householdId) {
               set((s) => ({ sync: { ...s.sync, syncing: false } }));
-              return { success: false, error: "No household found with that code." };
+              return { success: false, error: result.error || "Failed to join household" };
             }
-            const config = row.config as HouseholdConfig;
-            const meals  = await fetchDayLog(row.id, todayKey());
+
+            // Fetch the household using RLS-protected query
+            const households = await fetchUserHouseholds();
+            const household = households.find((h) => h.id === result.householdId);
+            if (!household) {
+              set((s) => ({ sync: { ...s.sync, syncing: false } }));
+              return { success: false, error: "Could not load household data" };
+            }
+
+            const config = household.config as HouseholdConfig;
+            const meals  = await fetchDayLog(result.householdId, todayKey());
             const dayLog = meals
               ? { date: todayKey(), meals: meals as DayLog["meals"] }
               : emptyDay();
 
             const entry: KnownHousehold = {
-              householdId:   row.id,
-              joinCode:      row.join_code,
+              householdId:   result.householdId,
+              joinCode:      household.joinCode ?? "",
               householdName: config.householdName,
               memberCount:   config.members.length,
             };
@@ -282,12 +314,11 @@ export const useAppStore = create<AppState>()(
               selectedDate:    todayKey(),
               knownHouseholds: [
                 entry,
-                ...s.knownHouseholds.filter((h) => h.householdId !== row.id),
+                ...s.knownHouseholds.filter((h) => h.householdId !== result.householdId),
               ],
               sync: { syncing: false, lastSyncedAt: new Date().toISOString(), syncError: null },
             }));
 
-            trackMembership(row.id, config.members[0]?.id ?? "");
             return { success: true };
           } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : "Failed to join";
@@ -556,11 +587,66 @@ export const useAppStore = create<AppState>()(
           }));
           pushDayLog(day);
         },
+
+        // ── Auth ───────────────────────────────────────────────────────────
+
+        initAuth: () => {
+          // Set up auth state listener
+          onAuthStateChange(async (session) => {
+            const userId = session?.user?.id ?? null;
+            set({ currentUserId: userId });
+
+            if (userId) {
+              // User logged in: load their households
+              try {
+                const households = await fetchUserHouseholds();
+                if (households.length > 0) {
+                  // Switch to the first household
+                  const first = households[0];
+                  const config = first.config as HouseholdConfig;
+                  const meals = await fetchDayLog(first.id, todayKey());
+                  const dayLog = meals
+                    ? { date: todayKey(), meals: meals as DayLog["meals"] }
+                    : emptyDay();
+
+                  set({
+                    household: config,
+                    dayLog,
+                    dayLogsCache: { [todayKey()]: dayLog },
+                    selectedDate: todayKey(),
+                    knownHouseholds: households.map((h) => ({
+                      householdId: h.id,
+                      joinCode: h.joinCode ?? "",
+                      householdName: (h.config as HouseholdConfig).householdName,
+                      memberCount: (h.config as HouseholdConfig).members.length,
+                    })),
+                  });
+                }
+              } catch (e) {
+                console.error("Failed to load user households:", e);
+              }
+            } else {
+              // User logged out: reset to default state
+              set({
+                currentUserId: null,
+                household: DEV_HOUSEHOLD,
+                knownHouseholds: [],
+                dayLog: emptyDay(),
+                dayLogsCache: {},
+                selectedDate: todayKey(),
+                foods: [],
+                householdFoodPrefs: {},
+                customFoods: [],
+              });
+            }
+          });
+        },
       };
     },
     {
       name: "homeplate-store-v5",
       partialize: (s) => ({
+        // Do NOT persist currentUserId - it changes with auth state
         household:         s.household,
         knownHouseholds:   s.knownHouseholds,
         selectedDate:      s.selectedDate,

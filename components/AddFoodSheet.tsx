@@ -27,7 +27,7 @@ interface Props {
 
 type Mode = "pick" | "search" | "create" | "quick";
 type WhoAte = string | "both";
-type SearchStep = "list" | "who-ate" | "detail" | "both-portions";
+type SearchStep = "list" | "who-ate" | "detail" | "both-portions" | "edit-nutrition";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -119,19 +119,26 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
   const [selFood, setSelFood]       = useState<SupabaseFood | null>(null);
   const [whoAte, setWhoAte]         = useState<WhoAte>(member.id);
 
-  // Single-member detail
-  const [qty, setQty]               = useState(1);
+  // Single-member detail — qty is a string so the user can clear and retype
+  const [qtyStr, setQtyStr]         = useState("1");
   const [unit, setUnit]             = useState("katori");
   const [prepChoices, setPrepChoices] = useState<Record<string,string>>({});
   const [addedIngs, setAddedIngs]   = useState<string[]>([]);
+  const [isCustomQty, setIsCustomQty] = useState(false);
 
-  // Both-portions
-  const [memberQtys, setMemberQtys] = useState<Record<string,number>>(
-    () => Object.fromEntries(allMembers.map((m) => [m.id, 1]))
+  // Parsed numeric value (0 when empty — used for calculation)
+  const qty = parseFloat(qtyStr) || 0;
+
+  // Both-portions — also strings
+  const [memberQtyStrs, setMemberQtyStrs] = useState<Record<string,string>>(
+    () => Object.fromEntries(allMembers.map((m) => [m.id, "1"]))
   );
   const [memberUnits, setMemberUnits] = useState<Record<string,string>>(
     () => Object.fromEntries(allMembers.map((m) => [m.id, "katori"]))
   );
+
+  // Nutrition editing
+  const [editNutrition, setEditNutrition] = useState<Nutrition | null>(null);
 
   // ── food list ──
   const allFoods: SupabaseFood[] = useMemo(() => foods, [foods]);
@@ -155,11 +162,13 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
 
   function selectFood(food: SupabaseFood) {
     setSelFood(food);
-    setQty(food.default_serving_qty);
+    setQtyStr(String(food.default_serving_qty));
     setUnit(food.default_serving_unit);
     setPrepChoices({});
     setAddedIngs([]);
-    setMemberQtys(Object.fromEntries(allMembers.map((m) => [m.id, food.default_serving_qty])));
+    setEditNutrition(null);
+    setIsCustomQty(false);
+    setMemberQtyStrs(Object.fromEntries(allMembers.map((m) => [m.id, String(food.default_serving_qty)])));
     setMemberUnits(Object.fromEntries(allMembers.map((m) => [m.id, food.default_serving_unit])));
     setStep(food.category === "Homemade" || food.preparation_options.length > 0 ? "who-ate" : "detail");
   }
@@ -169,16 +178,16 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
   }
 
   function doLog() {
-    if (!selFood) return;
+    if (!selFood || qty === 0) return;
     if (whoAte === "both") {
       for (const m of allMembers) {
-        const mq = memberQtys[m.id];
+        const mq = parseFloat(memberQtyStrs[m.id]) || 0;
         const mu = memberUnits[m.id];
-        const nutr = calculateNutritionV2(selFood, mq, mu, prepChoices, addedIngs);
+        const nutr = editNutrition || calculateNutritionV2(selFood, mq, mu, prepChoices, addedIngs);
         addFood(buildLoggedFood(selFood, m.id, mq, mu, nutr, prepChoices, addedIngs));
       }
     } else {
-      const nutr = calculateNutritionV2(selFood, qty, unit, prepChoices, addedIngs);
+      const nutr = editNutrition || calculateNutritionV2(selFood, qty, unit, prepChoices, addedIngs);
       addFood(buildLoggedFood(selFood, whoAte, qty, unit, nutr, prepChoices, addedIngs));
     }
     onAdded();
@@ -204,6 +213,88 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
       timestamp: new Date().toISOString(),
       entryType: "search",
     };
+  }
+
+  // ── Edit Nutrition ──
+  if (step === "edit-nutrition" && selFood) {
+    const currentNutr = editNutrition || liveNutrition(selFood, qty, unit);
+
+    return (
+      <div className="px-4 py-4 space-y-4 pb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold text-gray-800">{selFood.name}</div>
+            <div className="text-sm text-gray-400 mt-0.5">Edit nutrition values</div>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
+          <div className="text-xs font-semibold text-gray-600 uppercase">Current values ({qty} {unit})</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-orange-600">{Math.round(currentNutr.calories)}</div>
+              <div className="text-xs text-gray-500 mt-1">Calories</div>
+            </div>
+            <div className="bg-white rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-blue-600">{currentNutr.protein.toFixed(1)}</div>
+              <div className="text-xs text-gray-500 mt-1">Protein (g)</div>
+            </div>
+            <div className="bg-white rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-yellow-600">{currentNutr.carbs.toFixed(1)}</div>
+              <div className="text-xs text-gray-500 mt-1">Carbs (g)</div>
+            </div>
+            <div className="bg-white rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold text-red-600">{currentNutr.fat.toFixed(1)}</div>
+              <div className="text-xs text-gray-500 mt-1">Fat (g)</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="text-xs font-semibold text-gray-600 uppercase">Adjust values</div>
+          <Field label="Calories" unit="kcal">
+            <input type="number" step="1" value={editNutrition?.calories ?? currentNutr.calories}
+              onChange={(e) => setEditNutrition({...(editNutrition || currentNutr), calories: parseFloat(e.target.value) || 0})}
+              className={INPUT} />
+          </Field>
+          <Field label="Protein" unit="g">
+            <input type="number" step="0.1" value={editNutrition?.protein ?? currentNutr.protein}
+              onChange={(e) => setEditNutrition({...(editNutrition || currentNutr), protein: parseFloat(e.target.value) || 0})}
+              className={INPUT} />
+          </Field>
+          <Field label="Carbs" unit="g">
+            <input type="number" step="0.1" value={editNutrition?.carbs ?? currentNutr.carbs}
+              onChange={(e) => setEditNutrition({...(editNutrition || currentNutr), carbs: parseFloat(e.target.value) || 0})}
+              className={INPUT} />
+          </Field>
+          <Field label="Fibre" unit="g">
+            <input type="number" step="0.1" value={editNutrition?.fibre ?? currentNutr.fibre}
+              onChange={(e) => setEditNutrition({...(editNutrition || currentNutr), fibre: parseFloat(e.target.value) || 0})}
+              className={INPUT} />
+          </Field>
+          <Field label="Fat" unit="g">
+            <input type="number" step="0.1" value={editNutrition?.fat ?? currentNutr.fat}
+              onChange={(e) => setEditNutrition({...(editNutrition || currentNutr), fat: parseFloat(e.target.value) || 0})}
+              className={INPUT} />
+          </Field>
+        </div>
+
+        <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-xl">
+          💡 Changes only affect this meal entry — the food recipe stays unchanged.
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={() => { setEditNutrition(null); setStep(whoAte === "both" ? "both-portions" : "detail"); }}
+            className="flex-1 py-3 rounded-2xl bg-gray-200 text-gray-800 font-semibold active:bg-gray-300">
+            Back
+          </button>
+          <button onClick={() => setStep(whoAte === "both" ? "both-portions" : "detail")}
+            className="flex-1 py-3 rounded-2xl bg-orange-500 text-white font-semibold active:bg-orange-600">
+            Done Editing
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // ── Who ate ──
@@ -308,31 +399,49 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
                 </div>
               )}
 
-              {/* Portion presets */}
-              <div className="grid grid-cols-2 gap-2">
-                {selFood.portion_presets
-                  .filter((p) => p.qty > 0)
-                  .map((p) => (
-                    <button key={`${p.qty}-${p.label}`}
-                      onClick={() => setQty(p.qty)}
-                      className={`py-3 rounded-xl text-sm font-medium border transition-colors ${qty === p.qty && unit === selFood.default_serving_unit ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200"}`}>
-                      {p.label}
-                    </button>
-                  ))}
-                <button
-                  onClick={() => {/* keep qty editable */}}
-                  className="py-3 rounded-xl text-sm font-medium border bg-white text-gray-600 border-gray-200 col-span-1">
-                  Custom
-                </button>
-              </div>
+              {/* Portion presets - Only show if unit matches default */}
+              {unit === selFood.default_serving_unit && selFood.portion_presets.filter((p) => p.qty > 0).length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {selFood.portion_presets
+                    .filter((p) => p.qty > 0)
+                    .map((p) => (
+                      <button key={`${p.qty}-${p.label}`}
+                        onClick={() => { setQtyStr(String(p.qty)); setIsCustomQty(false); }}
+                        className={`py-3 rounded-xl text-sm font-medium border transition-colors ${qty === p.qty && !isCustomQty ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200"}`}>
+                        {p.label}
+                      </button>
+                    ))}
+                  <button
+                    onClick={() => setIsCustomQty(true)}
+                    className={`py-3 rounded-xl text-sm font-medium border transition-colors ${isCustomQty ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200"}`}>
+                    Custom
+                  </button>
+                </div>
+              )}
+
+              {/* Fallback: Show input + Custom when no presets for unit */}
+              {unit !== selFood.default_serving_unit && (
+                <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-xl mb-2">
+                  💡 No presets available for {unit} — use custom input below
+                </div>
+              )}
 
               {/* Custom quantity input */}
-              <div className="flex items-center gap-2">
-                <input type="number" min="0.1" step="0.1" value={qty}
-                  onChange={(e) => setQty(parseFloat(e.target.value) || 0)}
-                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-orange-400 text-gray-900 bg-white" />
-                <span className="text-sm text-gray-500 w-16">{unit}</span>
+              <div className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-colors ${isCustomQty ? "border-orange-400 bg-orange-50" : "border-gray-200 bg-white"}`}>
+                <input type="number" min="0.1" step="0.1" value={qtyStr}
+                  onChange={(e) => { setQtyStr(e.target.value); setIsCustomQty(true); }}
+                  autoFocus={isCustomQty}
+                  className="flex-1 outline-none text-sm text-gray-900 bg-transparent" />
+                <span className="text-sm text-gray-500 font-medium">{unit}</span>
               </div>
+
+              {/* Unit conversion hint - Only show if not already in grams */}
+              {unit !== "gram" && unit !== selFood.default_serving_unit && selFood.grams_per_default_unit && (
+                <div className="text-xs text-gray-500 flex items-center gap-1">
+                  <span>≈</span>
+                  <span>{(qty * (selFood.grams_per_default_unit / (selFood.default_serving_qty || 1))).toFixed(0)}g</span>
+                </div>
+              )}
             </div>
 
             {/* Nutrition preview */}
@@ -360,7 +469,7 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
                 )}
               </div>
             )}
-            <button onClick={doLog} className="w-full py-4 rounded-2xl bg-orange-500 text-white font-semibold text-base active:bg-orange-600">
+            <button onClick={doLog} disabled={qty === 0} className="w-full py-4 rounded-2xl bg-orange-500 text-white font-semibold text-base active:bg-orange-600 disabled:opacity-40">
               Add to {meal}
             </button>
           </>
@@ -381,7 +490,7 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
       <div className="px-4 py-4 space-y-5 pb-24">
         <div className="text-base font-bold text-gray-800">Set portions</div>
         {allMembers.map((m) => {
-          const mq   = memberQtys[m.id];
+          const mq   = parseFloat(memberQtyStrs[m.id]) || 0;
           const mu   = memberUnits[m.id];
           const mc2  = getMemberColors(m.avatarColor);
           const prev = calculateNutritionV2(selFood, mq, mu, prepChoices, addedIngs).calories;
@@ -405,15 +514,15 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
               <div className="grid grid-cols-2 gap-2">
                 {selFood.portion_presets.map((p) => (
                   <button key={p.label}
-                    onClick={() => setMemberQtys((prev2) => ({ ...prev2, [m.id]: p.qty }))}
+                    onClick={() => setMemberQtyStrs((prev2) => ({ ...prev2, [m.id]: String(p.qty) }))}
                     className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${mq === p.qty ? `${mc2.bg} text-white ${mc2.border}` : "bg-white text-gray-600 border-gray-200"}`}>
                     {p.label}
                   </button>
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <input type="number" min="0.1" step="0.1" value={mq}
-                  onChange={(e) => setMemberQtys((p) => ({ ...p, [m.id]: parseFloat(e.target.value)||0 }))}
+                <input type="number" min="0.1" step="0.1" value={memberQtyStrs[m.id]}
+                  onChange={(e) => setMemberQtyStrs((p) => ({ ...p, [m.id]: e.target.value }))}
                   className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none text-gray-900 bg-white" />
                 <span className="text-xs text-gray-400">{mu}</span>
               </div>
@@ -421,52 +530,76 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
             </div>
           );
         })}
-        <button onClick={doLog} className="w-full py-4 rounded-2xl bg-orange-500 text-white font-semibold text-base active:bg-orange-600">
-          Add to {meal}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setStep("edit-nutrition")} className="flex-1 py-4 rounded-2xl bg-gray-200 text-gray-800 font-semibold text-base active:bg-gray-300">
+            Edit Nutrition
+          </button>
+          <button onClick={doLog} disabled={allMembers.some((m) => !memberQtyStrs[m.id] || parseFloat(memberQtyStrs[m.id]) === 0)} className="flex-1 py-4 rounded-2xl bg-orange-500 text-white font-semibold text-base active:bg-orange-600 disabled:opacity-40">
+            Add to {meal}
+          </button>
+        </div>
       </div>
     );
   }
 
   // ── Food list ──
-  const CATS: (FoodCategory | "All" | "Recent" | "Saved")[] = [
-    "All","Recent","Saved","Homemade","Basic Foods","Packaged Foods","Protein","Drinks","Fruits","Additions",
+  const CATS: { key: FoodCategory | "All" | "Recent" | "Saved"; icon: string; label: string }[] = [
+    { key: "All",            icon: "🔍", label: "All"       },
+    { key: "Recent",         icon: "🕐", label: "Recent"    },
+    { key: "Homemade",       icon: "🍲", label: "Curries"   },
+    { key: "Basic Foods",    icon: "🍚", label: "Basics"    },
+    { key: "Protein",        icon: "🍗", label: "Protein"   },
+    { key: "Fruits",         icon: "🍌", label: "Fruits"    },
+    { key: "Drinks",         icon: "☕", label: "Drinks"    },
+    { key: "Packaged Foods", icon: "📦", label: "Packaged"  },
+    { key: "Additions",      icon: "➕", label: "Extras"    },
+    { key: "Saved",          icon: "⭐", label: "Saved"     },
   ];
 
   return (
-    <div className="px-4 py-4 space-y-4">
+    <div className="px-4 py-4 space-y-3">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input className="w-full pl-9 pr-4 py-3 bg-gray-100 rounded-2xl text-sm outline-none placeholder:text-gray-400 text-gray-900"
           placeholder="Search foods…" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {CATS.map((cat) => (
-          <button key={cat} onClick={() => setActiveCat(cat)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${activeCat === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600"}`}>
-            {cat}
+      <div className="grid grid-cols-5 gap-1.5">
+        {CATS.map(({ key, icon, label }) => (
+          <button key={key} onClick={() => setActiveCat(key)}
+            className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl text-center transition-colors ${
+              activeCat === key
+                ? "bg-orange-500 text-white"
+                : "bg-gray-50 text-gray-600 active:bg-gray-100"
+            }`}>
+            <span className="text-base leading-none">{icon}</span>
+            <span className="text-xs font-medium leading-tight">{label}</span>
           </button>
         ))}
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {filtered.map((food) => (
           <button key={food.id} onClick={() => selectFood(food)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 active:bg-gray-100 text-left">
-            <div>
+            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 active:bg-gray-100 text-left hover:bg-orange-50 transition">
+            <div className="flex-1">
               <div className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
                 {food.name}
                 {food.confidence === "draft" && (
                   <span className="text-xs text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-md">draft</span>
                 )}
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-gray-400 mt-0.5">
                 {food.food_type !== "global" ? "Saved" : food.category}
-                {" · per "}{food.default_serving_qty}{food.default_serving_qty !== 1 ? "" : ""} {food.default_serving_unit}
+                {" · "}{food.default_serving_qty}{food.default_serving_qty !== 1 ? "" : ""} {food.default_serving_unit}
+              </div>
+              <div className="text-xs text-gray-500 mt-1.5 flex gap-3">
+                <span className="font-medium">{food.calories} cal</span>
+                <span>P: {food.protein}g</span>
+                <span>C: {food.carbs}g</span>
+                <span>F: {food.fat}g</span>
               </div>
             </div>
-            <div className="text-sm font-semibold text-gray-500">{food.calories} kcal</div>
           </button>
         ))}
         {filtered.length === 0 && (
@@ -500,6 +633,7 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
   const [whoAte, setWhoAte]         = useState<WhoAte>(member.id);
   const [saveMode, setSaveMode]     = useState<"once"|"mine"|"household">("once");
   const [saving, setSaving]         = useState(false);
+  const [saveError, setSaveError]   = useState<string | null>(null);
 
   const calories    = parseFloat(cals) || 0;
   const canSubmit   = name.trim().length > 0 && calories > 0;
@@ -514,6 +648,7 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
   async function handleAdd() {
     if (!canSubmit || saving) return;
     setSaving(true);
+    setSaveError(null);
 
     let foodItem: FoodItem = {
       id: uuidv4(), name: name.trim(), category,
@@ -522,6 +657,12 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
 
     if (saveMode !== "once" && household.householdId) {
       try {
+        console.log("💾 Saving custom food to Supabase...", {
+          householdId: household.householdId,
+          householdIdType: typeof household.householdId,
+          householdIdLength: household.householdId?.length,
+          name
+        });
         const saved = await addCustomFood({
           householdId:         household.householdId,
           createdByMemberId:   member.id,
@@ -531,8 +672,25 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
           nutrition,
           scope: saveMode === "household" ? "household" : "personal",
         });
+        console.log("✅ Food saved successfully!", saved);
         foodItem = { ...foodItem, id: saved.id };
-      } catch { /* log anyway */ }
+      } catch (err) {
+        console.error("❌ Error saving custom food:", err);
+
+        // Extract error message from various error types
+        let errMsg = "Unknown error";
+        if (err instanceof Error) {
+          errMsg = err.message;
+        } else if (err && typeof err === "object") {
+          const errorObj = err as any;
+          errMsg = errorObj.message || errorObj.error_description || errorObj.error || String(err);
+        }
+
+        console.error("📋 Error details:", { errMsg, fullError: err });
+        setSaveError(`Failed to save: ${errMsg}`);
+        setSaving(false);
+        return;
+      }
     }
 
     const targets = whoAte === "both" ? allMembers : allMembers.filter((m) => m.id === whoAte);
@@ -550,6 +708,12 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
 
   return (
     <div className="px-4 py-4 space-y-4 pb-8">
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+          ⚠️ {saveError}
+        </div>
+      )}
+
       <Field label="Food name" required>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={INPUT} placeholder="Required" />
       </Field>
