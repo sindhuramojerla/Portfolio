@@ -621,7 +621,7 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
 function CreateMode({ meal, member, allMembers, onAdded }: {
   meal:MealType; member:Member; allMembers:Member[]; onAdded:()=>void;
 }) {
-  const { addFood, addCustomFood, household } = useAppStore();
+  const { addFood, addCustomFood, household, currentUserId } = useAppStore();
   const [name, setName]             = useState("");
   const [category, setCategory]     = useState<FoodCategory>("Basic Foods");
   const [servingName, setServingName] = useState("1 serving");
@@ -665,7 +665,7 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
         });
         const saved = await addCustomFood({
           householdId:         household.householdId,
-          createdByMemberId:   member.id,
+          createdByMemberId:   currentUserId || member.id,  // Use auth.uid() if available, fallback to member.id
           name:                name.trim(),
           category,
           servingName,
