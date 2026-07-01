@@ -190,9 +190,18 @@ export const useAppStore = create<AppState>()(
       }
 
       async function pushHousehold(config: HouseholdConfig) {
-        if (!config.householdId) return;
-        try { await upsertHousehold(config.householdId, config.joinCode, config); }
-        catch { /* silent */ }
+        if (!config.householdId) {
+          console.warn("No householdId to save");
+          return;
+        }
+        try {
+          console.log("Upserting household to database...");
+          await upsertHousehold(config.householdId, config.joinCode, config);
+          console.log("✅ Household upserted to database");
+        } catch (err) {
+          console.error("❌ Failed to upsert household:", err);
+          throw err;
+        }
       }
 
       /**
@@ -201,15 +210,29 @@ export const useAppStore = create<AppState>()(
        */
       async function ensureUserInHousehold(householdId: string, userId: string) {
         try {
-          const { error } = await supabase
+          console.log("Adding user to household_memberships:", { householdId, userId });
+          const { data, error } = await supabase
             .from("household_memberships")
             .upsert(
               { household_id: householdId, member_id: userId },
               { onConflict: "household_id,member_id" }
-            );
-          if (error) console.error("Failed to add user to household_memberships:", error);
+            )
+            .select();
+
+          if (error) {
+            console.error("❌ Failed to add user to household_memberships:", {
+              message: error.message,
+              code: error.code,
+              details: error.details,
+              hint: error.hint,
+            });
+            throw error;
+          }
+
+          console.log("✅ User added to household_memberships:", data);
         } catch (e) {
-          console.error("ensureUserInHousehold error:", e);
+          console.error("❌ ensureUserInHousehold fatal error:", e);
+          throw e;
         }
       }
 
@@ -263,28 +286,43 @@ export const useAppStore = create<AppState>()(
         // ── Household ──────────────────────────────────────────────────────
 
         saveHousehold: async (config) => {
-          set({ household: config });
-          await pushHousehold(config);
+          try {
+            console.log("💾 Saving household:", { householdId: config.householdId, name: config.householdName });
 
-          // Add current user to household_memberships (required for RLS)
-          const userId = get().currentUserId;
-          if (userId) {
-            await ensureUserInHousehold(config.householdId, userId);
+            // 1. Save household config
+            set({ household: config });
+            await pushHousehold(config);
+            console.log("✅ Household config saved");
+
+            // 2. Add current user to household_memberships (CRITICAL for RLS)
+            const userId = get().currentUserId;
+            if (!userId) {
+              console.warn("⚠️ No currentUserId available for membership");
+            } else {
+              console.log("👤 Linking user to household...");
+              await ensureUserInHousehold(config.householdId, userId);
+              console.log("✅ User linked to household");
+            }
+
+            // 3. Track in knownHouseholds
+            set((s) => {
+              const entry: KnownHousehold = {
+                householdId:  config.householdId,
+                joinCode:     config.joinCode,
+                householdName: config.householdName,
+                memberCount:  config.members.length,
+              };
+              const others = s.knownHouseholds.filter(
+                (h) => h.householdId !== config.householdId
+              );
+              return { knownHouseholds: [entry, ...others] };
+            });
+
+            console.log("✅ Household saved successfully");
+          } catch (err) {
+            console.error("❌ Error saving household:", err);
+            throw err;
           }
-
-          // Track in knownHouseholds
-          set((s) => {
-            const entry: KnownHousehold = {
-              householdId:  config.householdId,
-              joinCode:     config.joinCode,
-              householdName: config.householdName,
-              memberCount:  config.members.length,
-            };
-            const others = s.knownHouseholds.filter(
-              (h) => h.householdId !== config.householdId
-            );
-            return { knownHouseholds: [entry, ...others] };
-          });
         },
 
         joinHousehold: async (joinCode) => {

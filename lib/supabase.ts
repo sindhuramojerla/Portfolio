@@ -317,6 +317,7 @@ export async function saveCustomFoodToFoods(food: {
     foodCode,
     name: food.name,
     householdId: food.householdId,
+    createdByMemberId: food.createdByMemberId,
   });
 
   try {
@@ -345,7 +346,12 @@ export async function saveCustomFoodToFoods(food: {
       .single();
 
     if (error) {
-      console.error("❌ Supabase error:", error);
+      console.error("❌ Supabase error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       throw new Error(error.message || "Failed to save food");
     }
 
