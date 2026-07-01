@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   MealType, Member, FoodCategory, SupabaseFood,
   Nutrition, LoggedFood, FoodItem, CustomFoodItem,
@@ -10,7 +10,7 @@ import { calculateNutritionV2, supabaseFoodToFoodItem, servingLabel } from "@/li
 import { useAppStore } from "@/lib/store";
 import { getMemberColors } from "@/lib/colors";
 import {
-  X, ChevronLeft, Search, Plus, Zap, ChevronRight, Check, AlertTriangle,
+  X, ChevronLeft, Search, Plus, Zap, ChevronRight, Check, AlertTriangle, AlertCircle,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -635,6 +635,13 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
   const [saving, setSaving]         = useState(false);
   const [saveError, setSaveError]   = useState<string | null>(null);
 
+  // Clear error when user changes form inputs
+  const handleClearError = () => setSaveError(null);
+
+  useEffect(() => {
+    handleClearError();
+  }, [name, category, servingName, cals, protein, carbs, fibre, fat]);
+
   const calories    = parseFloat(cals) || 0;
   const canSubmit   = name.trim().length > 0 && calories > 0;
   const nutrition: Nutrition = {
@@ -714,8 +721,18 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
   return (
     <div className="px-4 py-4 space-y-4 pb-8">
       {saveError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-          ⚠️ {saveError}
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{saveError}</span>
+          </div>
+          <button
+            onClick={() => setSaveError(null)}
+            className="flex-shrink-0 text-red-400 hover:text-red-600"
+            aria-label="Close error"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
