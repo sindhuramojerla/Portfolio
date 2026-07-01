@@ -150,6 +150,7 @@ interface AppState {
   // ── Food catalogue ────────────────────────────────────────────────────────
   loadFoods: () => Promise<void>;
   addCustomFood: (food: Omit<CustomFoodItem, "id" | "createdAt">) => Promise<CustomFoodItem>;
+  deleteCustomFood: (foodId: string) => Promise<void>;
   trackRecentFood: (foodCode: string) => void;
 
   // ── Derived reads ─────────────────────────────────────────────────────────
@@ -228,12 +229,16 @@ export const useAppStore = create<AppState>()(
           }
           console.log("✅ Household exists in Supabase");
 
-          // Step 2: Insert membership
+          // Step 2: Insert/update membership (web device)
           const { data, error } = await supabase
             .from("household_memberships")
             .upsert(
-              { household_id: householdId, member_id: userId },
-              { onConflict: "household_id,member_id" }
+              {
+                household_id: householdId,
+                member_id: userId,
+                device_token: "web", // Device identifier for web app
+              },
+              { onConflict: "household_id,device_token" }
             )
             .select();
 
@@ -667,6 +672,15 @@ export const useAppStore = create<AppState>()(
           const full: CustomFoodItem = { ...food, id, createdAt };
           set((s) => ({ customFoods: [...s.customFoods, full] }));
           return full;
+        },
+
+        deleteCustomFood: async (foodId: string) => {
+          const { deleteCustomFood: deleteFromSupabase } = await import("./supabase");
+          await deleteFromSupabase(foodId);
+          set((s) => ({
+            customFoods: s.customFoods.filter((f) => f.id !== foodId),
+            foods: s.foods.filter((f) => f.id !== foodId),
+          }));
         },
 
         trackRecentFood: (foodCode) => {

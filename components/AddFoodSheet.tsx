@@ -10,7 +10,7 @@ import { calculateNutritionV2, supabaseFoodToFoodItem, servingLabel } from "@/li
 import { useAppStore } from "@/lib/store";
 import { getMemberColors } from "@/lib/colors";
 import {
-  X, ChevronLeft, Search, Plus, Zap, ChevronRight, Check, AlertTriangle, AlertCircle,
+  X, ChevronLeft, Search, Plus, Zap, ChevronRight, Check, AlertTriangle, AlertCircle, Trash2,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -580,27 +580,43 @@ function SearchMode({ meal, member, allMembers, onAdded, onCreateNew }: {
 
       <div className="space-y-1.5">
         {filtered.map((food) => (
-          <button key={food.id} onClick={() => selectFood(food)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 active:bg-gray-100 text-left hover:bg-orange-50 transition">
-            <div className="flex-1">
-              <div className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
-                {food.name}
-                {food.confidence === "draft" && (
-                  <span className="text-xs text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-md">draft</span>
-                )}
+          <div key={food.id} className="flex items-center gap-2">
+            <button onClick={() => selectFood(food)}
+              className="flex-1 flex items-center justify-between px-4 py-3 rounded-2xl bg-gray-50 active:bg-gray-100 text-left hover:bg-orange-50 transition">
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+                  {food.name}
+                  {food.confidence === "draft" && (
+                    <span className="text-xs text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-md">draft</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {food.food_type !== "global" ? "Saved" : food.category}
+                  {" · "}{food.default_serving_qty}{food.default_serving_qty !== 1 ? "" : ""} {food.default_serving_unit}
+                </div>
+                <div className="text-xs text-gray-500 mt-1.5 flex gap-3">
+                  <span className="font-medium">{food.calories} cal</span>
+                  <span>P: {food.protein}g</span>
+                  <span>C: {food.carbs}g</span>
+                  <span>F: {food.fat}g</span>
+                </div>
               </div>
-              <div className="text-xs text-gray-400 mt-0.5">
-                {food.food_type !== "global" ? "Saved" : food.category}
-                {" · "}{food.default_serving_qty}{food.default_serving_qty !== 1 ? "" : ""} {food.default_serving_unit}
-              </div>
-              <div className="text-xs text-gray-500 mt-1.5 flex gap-3">
-                <span className="font-medium">{food.calories} cal</span>
-                <span>P: {food.protein}g</span>
-                <span>C: {food.carbs}g</span>
-                <span>F: {food.fat}g</span>
-              </div>
-            </div>
-          </button>
+            </button>
+            {food.food_type !== "global" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Delete "${food.name}"?`)) {
+                    useAppStore.getState().deleteCustomFood(food.id);
+                  }
+                }}
+                className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+                title="Delete this food"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         ))}
         {filtered.length === 0 && (
           <div className="text-center py-8 text-gray-400 text-sm">No foods match "{query}"</div>

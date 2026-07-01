@@ -69,6 +69,15 @@ export default function HouseholdManager({ onClose }: Props) {
   // ── Create ────────────────────────────────────────────────────────────────
 
   async function handleCreate() {
+    // Check for duplicate names
+    const names = newMembers.map(m => m.name.trim().toLowerCase()).filter(n => n);
+    const uniqueNames = new Set(names);
+
+    if (names.length > 0 && uniqueNames.size !== names.length) {
+      alert("❌ Member names must be unique. Two members cannot have the same name.");
+      return;
+    }
+
     const members: Member[] = newMembers.map((m, i) => ({
       id:          uuidv4(),
       name:        m.name.trim() || `Member ${i + 1}`,
@@ -123,8 +132,8 @@ export default function HouseholdManager({ onClose }: Props) {
         const busy     = busyId === h.householdId;
         return (
           <div key={h.householdId} className={`rounded-2xl border px-4 py-3 ${isActive ? "border-orange-200 bg-orange-50" : "border-gray-100 bg-white"}`}>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1">
                 <div className="font-semibold text-gray-800 flex items-center gap-2">
                   {h.householdName}
                   {isActive && (
@@ -135,19 +144,20 @@ export default function HouseholdManager({ onClose }: Props) {
                   {h.memberCount} member{h.memberCount !== 1 ? "s" : ""} · Code: {h.joinCode}
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                {!isActive && (
-                  <button onClick={() => handleSwitch(h.householdId)} disabled={busy}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gray-900 text-white text-xs font-medium disabled:opacity-50">
-                    {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}
-                    Switch
-                  </button>
-                )}
-                <button onClick={() => confirmLeave(h.householdId)}
-                  className="p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-400 transition-colors">
-                  <LogOut className="w-4 h-4" />
+            </div>
+            <div className="flex items-center gap-2">
+              {!isActive && (
+                <button onClick={() => handleSwitch(h.householdId)} disabled={busy}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-gray-900 text-white text-xs font-medium disabled:opacity-50">
+                  {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}
+                  Switch
                 </button>
-              </div>
+              )}
+              <button onClick={() => confirmLeave(h.householdId)}
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-xl bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors">
+                <LogOut className="w-3 h-3" />
+                Leave
+              </button>
             </div>
           </div>
         );
@@ -161,6 +171,25 @@ export default function HouseholdManager({ onClose }: Props) {
         <button onClick={() => setView("create-name")}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50">
           <Plus className="w-4 h-4" /> Create new
+        </button>
+      </div>
+
+      <div className="pt-3 border-t border-gray-100">
+        <button onClick={async () => {
+          if (confirm("Delete ALL households permanently? This cannot be undone.")) {
+            try {
+              const { deleteAllUserHouseholds } = await import("@/lib/supabase");
+              await deleteAllUserHouseholds();
+              alert("All households deleted! Refreshing...");
+              window.location.href = "/";
+            } catch (err) {
+              console.error("Delete error:", err);
+              alert("Failed: " + (err instanceof Error ? err.message : "Unknown error"));
+            }
+          }
+        }}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition">
+          <LogOut className="w-4 h-4" /> Delete all households
         </button>
       </div>
     </div>

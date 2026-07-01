@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 import { CustomFoodItem, HouseholdFoodPref, SupabaseFood, HouseholdConfig } from "./types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -138,9 +139,12 @@ export async function upsertHousehold(id: string, joinCode: string, config: obje
   });
 
   try {
+    // Hash the join code
+    const joinCodeHash = crypto.createHash("sha256").update(joinCode).digest("hex");
+
     const { data, error, status } = await supabase
       .from("households")
-      .upsert({ id, join_code: joinCode, config }, { onConflict: "id" })
+      .upsert({ id, join_code_hash: joinCodeHash, config }, { onConflict: "id" })
       .select();
 
     console.log("📡 Supabase response:", {
@@ -407,21 +411,22 @@ export async function fetchCustomFoods(
   householdId: string,
   memberId: string
 ): Promise<CustomFoodItem[]> {
+  // Fetch custom foods from the foods table (where they're actually saved)
   const { data, error } = await supabase
-    .from("custom_foods")
+    .from("foods")
     .select("*")
     .eq("household_id", householdId)
-    .or(`scope.eq.household,and(scope.eq.personal,created_by_member_id.eq.${memberId})`);
+    .not("created_by_member_id", "is", null);
   if (error) return [];
   return (data ?? []).map((row) => ({
     id:                  row.id,
     householdId:         row.household_id,
     createdByMemberId:   row.created_by_member_id,
     name:                row.name,
-    category:            row.category,
+    category:            row.category || null,
     servingName:         row.serving_name,
     nutrition:           row.nutrition,
-    scope:               row.scope,
+    scope:               "household",
     createdAt:           row.created_at,
   }));
 }
@@ -551,6 +556,82 @@ export async function saveCustomFoodToFoods(food: {
     return { id: data.id as string, createdAt: data.created_at as string };
   } catch (err) {
     console.error("🔥 Error saving custom food:", err);
+    throw err;
+  }
+}
+
+/**
+ * Delete all households for the current user
+ */
+export async function deleteAllUserHouseholds(): Promise<void> {
+  try {
+    console.log("🗑️ Deleting all user households...");
+
+    // Get current user ID
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = session.user.id;
+    console.log("User ID:", userId);
+
+    // Get all households for current user
+    const { data: memberships, error: fetchError } = await supabase
+      .from("household_memberships")
+      .select("household_id")
+      .eq("member_id", userId);
+
+    console.log("Found memberships:", memberships?.length);
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    if (!memberships || memberships.length === 0) {
+      console.log("No households to delete");
+      return;
+    }
+
+    // Delete each household
+    for (const { household_id } of memberships) {
+      console.log("Deleting household:", household_id);
+      const { error: deleteError } = await supabase
+        .from("households")
+        .delete()
+        .eq("id", household_id);
+
+      if (deleteError) {
+        console.error("Error deleting household:", deleteError);
+        throw deleteError;
+      }
+    }
+
+    console.log("✅ All households deleted successfully");
+  } catch (err) {
+    console.error("🔥 Error deleting households:", err);
+    throw err;
+  }
+}
+
+/**
+ * Delete a custom food by ID
+ */
+export async function deleteCustomFood(foodId: string): Promise<void> {
+  try {
+    console.log("🗑️ Deleting custom food:", foodId);
+    const { error } = await supabase
+      .from("foods")
+      .delete()
+      .eq("id", foodId);
+
+    if (error) {
+      console.error("❌ Delete failed:", error);
+      throw error;
+    }
+    console.log("✅ Food deleted successfully");
+  } catch (err) {
+    console.error("🔥 Error deleting food:", err);
     throw err;
   }
 }
