@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { CustomFoodItem, HouseholdFoodPref, SupabaseFood } from "./types";
+import { CustomFoodItem, HouseholdFoodPref, SupabaseFood, HouseholdConfig } from "./types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -64,23 +64,35 @@ export async function fetchUserHouseholds() {
 
 /**
  * Get all households that exist (for finding unclaimed ones)
- * Note: This bypasses RLS and requires service role key in migrations
+ * Requires "households_select_authenticated" RLS policy to allow discovery
  */
 export async function fetchAllHouseholds() {
-  const { data, error } = await supabase
-    .from("households")
-    .select("id, config, created_at");
+  try {
+    const { data, error } = await supabase
+      .from("households")
+      .select("id, config, created_at");
 
-  if (error) {
-    console.error("Error fetching all households:", error);
+    if (error) {
+      // RLS policy might be blocking - this is expected on first login
+      // See FIX_HOUSEHOLD_DISCOVERY.md if you see this error
+      console.debug("Could not fetch all households (RLS policy may be blocking discovery):", error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      console.debug("No households found in database");
+      return [];
+    }
+
+    return data.map((h: any) => ({
+      id: h.id,
+      config: h.config as HouseholdConfig,
+      createdAt: h.created_at,
+    }));
+  } catch (err) {
+    console.error("Unexpected error fetching households:", err);
     return [];
   }
-
-  return (data ?? []).map((h: any) => ({
-    id: h.id,
-    config: h.config,
-    createdAt: h.created_at,
-  }));
 }
 
 /**
