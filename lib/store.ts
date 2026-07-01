@@ -29,6 +29,7 @@ import {
   fetchUserHouseholds,
   fetchAllHouseholds,
   claimHousehold,
+  householdExistsInSupabase,
   supabase,
 } from "./supabase";
 import { onAuthStateChange, getCurrentSession, logout as authLogout } from "./auth";
@@ -207,10 +208,27 @@ export const useAppStore = create<AppState>()(
       /**
        * When a household is first created, add the current user to household_memberships.
        * This allows RLS policies to grant the user access to the household.
+       * MUST be called AFTER household is saved to Supabase.
        */
       async function ensureUserInHousehold(householdId: string, userId: string) {
         try {
-          console.log("Adding user to household_memberships:", { householdId, userId });
+          console.log("👤 ensureUserInHousehold: Adding user to membership", {
+            householdId: householdId.slice(0, 8) + "...",
+            userId: userId.slice(0, 8) + "...",
+          });
+
+          // Step 1: Verify household exists first
+          const { householdExistsInSupabase } = await import("./supabase");
+          const exists = await householdExistsInSupabase(householdId);
+          if (!exists) {
+            throw new Error(
+              `Household ${householdId} does not exist in Supabase. ` +
+              `Must save household to database before adding membership.`
+            );
+          }
+          console.log("✅ Household exists in Supabase");
+
+          // Step 2: Insert membership
           const { data, error } = await supabase
             .from("household_memberships")
             .upsert(
@@ -220,18 +238,21 @@ export const useAppStore = create<AppState>()(
             .select();
 
           if (error) {
-            console.error("❌ Failed to add user to household_memberships:", {
-              message: error.message,
+            console.error("❌ Membership insert failed:", {
               code: error.code,
+              message: error.message,
               details: error.details,
               hint: error.hint,
             });
             throw error;
           }
 
-          console.log("✅ User added to household_memberships:", data);
+          console.log("✅ User membership created");
         } catch (e) {
-          console.error("❌ ensureUserInHousehold fatal error:", e);
+          console.error("❌ ensureUserInHousehold failed:", {
+            error: e instanceof Error ? e.message : String(e),
+            householdId: householdId.slice(0, 8) + "...",
+          });
           throw e;
         }
       }
@@ -287,24 +308,40 @@ export const useAppStore = create<AppState>()(
 
         saveHousehold: async (config) => {
           try {
-            console.log("💾 Saving household:", { householdId: config.householdId, name: config.householdName });
+            console.log("💾 saveHousehold:", {
+              householdId: config.householdId.slice(0, 8) + "...",
+              name: config.householdName,
+            });
 
-            // 1. Save household config
+            // 1. Save household config to local state
             set({ household: config });
-            await pushHousehold(config);
-            console.log("✅ Household config saved");
 
-            // 2. Add current user to household_memberships (CRITICAL for RLS)
+            // 2. Push to Supabase database
+            console.log("📤 Pushing to Supabase...");
+            await pushHousehold(config);
+
+            // 3. VERIFY household was actually saved
+            console.log("🔍 Verifying household in Supabase...");
+            const exists = await householdExistsInSupabase(config.householdId);
+            if (!exists) {
+              throw new Error(
+                `Household was not saved to Supabase. ` +
+                `Check RLS policies and database permissions.`
+              );
+            }
+            console.log("✅ Household verified in Supabase");
+
+            // 4. Add current user to household_memberships (CRITICAL for RLS)
             const userId = get().currentUserId;
             if (!userId) {
-              console.warn("⚠️ No currentUserId available for membership");
+              console.warn("⚠️ No currentUserId available - user not authenticated");
             } else {
-              console.log("👤 Linking user to household...");
+              console.log("👤 Adding user to household membership...");
               await ensureUserInHousehold(config.householdId, userId);
-              console.log("✅ User linked to household");
+              console.log("✅ User membership created");
             }
 
-            // 3. Track in knownHouseholds
+            // 5. Track in knownHouseholds
             set((s) => {
               const entry: KnownHousehold = {
                 householdId:  config.householdId,
@@ -318,9 +355,9 @@ export const useAppStore = create<AppState>()(
               return { knownHouseholds: [entry, ...others] };
             });
 
-            console.log("✅ Household saved successfully");
+            console.log("✅ Household saved and linked successfully");
           } catch (err) {
-            console.error("❌ Error saving household:", err);
+            console.error("❌ saveHousehold failed:", err instanceof Error ? err.message : String(err));
             throw err;
           }
         },

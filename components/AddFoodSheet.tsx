@@ -658,11 +658,16 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
     if (saveMode !== "once" && household.householdId) {
       try {
         console.log("💾 Saving custom food to Supabase...", {
-          householdId: household.householdId,
+          householdId: household.householdId.slice(0, 8) + "...",
           householdIdType: typeof household.householdId,
-          householdIdLength: household.householdId?.length,
-          name
+          createdByMemberId: currentUserId ? currentUserId.slice(0, 8) + "..." : member.id.slice(0, 8) + "...",
+          foodName: name,
         });
+
+        // Log diagnostic info
+        const { logAuthState } = await import("@/lib/supabase");
+        await logAuthState();
+
         const saved = await addCustomFood({
           householdId:         household.householdId,
           createdByMemberId:   currentUserId || member.id,  // Use auth.uid() if available, fallback to member.id
@@ -672,10 +677,10 @@ function CreateMode({ meal, member, allMembers, onAdded }: {
           nutrition,
           scope: saveMode === "household" ? "household" : "personal",
         });
-        console.log("✅ Food saved successfully!", saved);
+        console.log("✅ Food saved successfully!", { id: saved.id.slice(0, 8) + "..." });
         foodItem = { ...foodItem, id: saved.id };
       } catch (err) {
-        console.error("❌ Error saving custom food:", err);
+        console.error("❌ Error saving custom food:", err instanceof Error ? err.message : String(err));
 
         // Extract error message from various error types
         let errMsg = "Unknown error";

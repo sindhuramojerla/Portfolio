@@ -132,10 +132,118 @@ export async function claimHousehold(householdId: string) {
 }
 
 export async function upsertHousehold(id: string, joinCode: string, config: object) {
-  const { error } = await supabase
-    .from("households")
-    .upsert({ id, join_code: joinCode, config }, { onConflict: "id" });
-  if (error) throw error;
+  try {
+    const { data, error } = await supabase
+      .from("households")
+      .upsert({ id, join_code: joinCode, config }, { onConflict: "id" })
+      .select();
+
+    if (error) {
+      console.error("❌ upsertHousehold failed:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw error;
+    }
+
+    console.log("✅ Household upserted:", { id, config: typeof config });
+    return data;
+  } catch (err) {
+    console.error("🔥 upsertHousehold error:", err);
+    throw err;
+  }
+}
+
+/**
+ * Check if a household exists in Supabase
+ */
+export async function householdExistsInSupabase(householdId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("households")
+      .select("id")
+      .eq("id", householdId)
+      .single();
+
+    if (error && error.code === "PGRST116") {
+      // Row not found - this is expected
+      return false;
+    }
+
+    if (error) {
+      console.warn("Error checking household existence:", {
+        code: error.code,
+        message: error.message,
+      });
+      return false;
+    }
+
+    return !!data;
+  } catch (err) {
+    console.error("Unexpected error in householdExistsInSupabase:", err);
+    return false;
+  }
+}
+
+/**
+ * Check if user has membership for a household
+ */
+export async function userHasMembership(householdId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("household_memberships")
+      .select("household_id")
+      .eq("household_id", householdId)
+      .single();
+
+    if (error && error.code === "PGRST116") {
+      // Row not found
+      return false;
+    }
+
+    if (error) {
+      console.warn("Error checking membership:", {
+        code: error.code,
+        message: error.message,
+      });
+      return false;
+    }
+
+    return !!data;
+  } catch (err) {
+    console.error("Unexpected error in userHasMembership:", err);
+    return false;
+  }
+}
+
+/**
+ * Diagnostic: Log current auth and household state
+ * Safe - does not include personal data
+ */
+export async function logAuthState() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.log("🔐 Auth state: NOT AUTHENTICATED");
+      return;
+    }
+
+    if (!session) {
+      console.log("🔐 Auth state: NO SESSION");
+      return;
+    }
+
+    console.log("🔐 Auth state:", {
+      userId: session.user.id.slice(0, 8) + "...",
+      email: session.user.email ? session.user.email.split("@")[0] + "@..." : "unknown",
+      authenticated: !!session,
+    });
+  } catch (err) {
+    console.error("Error logging auth state:", err);
+  }
 }
 
 // ─── Day logs ─────────────────────────────────────────────────────────────────
@@ -302,6 +410,55 @@ export async function fetchCustomFoods(
 // ── SIMPLER APPROACH: Save custom foods directly to foods table ──
 // This leverages the existing foods table RLS which already works
 
+/**
+ * Validate preconditions for custom food insert
+ * Returns { valid: true } or { valid: false, error: string }
+ */
+export async function validateCustomFoodPreconditions(
+  householdId: string,
+  userId: string
+): Promise<{ valid: boolean; error?: string }> {
+  console.log("🔍 Validating custom food preconditions...");
+
+  // 1. User authenticated
+  if (!userId) {
+    return {
+      valid: false,
+      error: "Not authenticated. Please log in.",
+    };
+  }
+
+  // 2. Household ID provided
+  if (!householdId) {
+    return {
+      valid: false,
+      error: "No household selected.",
+    };
+  }
+
+  // 3. Household exists in Supabase
+  const householdExists = await householdExistsInSupabase(householdId);
+  if (!householdExists) {
+    return {
+      valid: false,
+      error: `Household does not exist in database. Please save household first.`,
+    };
+  }
+  console.log("✅ Household exists");
+
+  // 4. User has membership
+  const hasMembership = await userHasMembership(householdId);
+  if (!hasMembership) {
+    return {
+      valid: false,
+      error: `You are not a member of this household. Please claim or join it first.`,
+    };
+  }
+  console.log("✅ User has membership");
+
+  return { valid: true };
+}
+
 export async function saveCustomFoodToFoods(food: {
   householdId: string;
   createdByMemberId: string;
@@ -316,9 +473,21 @@ export async function saveCustomFoodToFoods(food: {
   console.log("🍽️ Saving custom food to foods table:", {
     foodCode,
     name: food.name,
-    householdId: food.householdId,
-    createdByMemberId: food.createdByMemberId,
+    householdId: food.householdId.slice(0, 8) + "...",
+    createdByMemberId: food.createdByMemberId.slice(0, 8) + "...",
   });
+
+  // CRITICAL: Validate before insert
+  const validation = await validateCustomFoodPreconditions(
+    food.householdId,
+    food.createdByMemberId
+  );
+
+  if (!validation.valid) {
+    const err = new Error(validation.error || "Precondition check failed");
+    console.error("❌ Precondition failed:", validation.error);
+    throw err;
+  }
 
   try {
     const { data, error } = await supabase
