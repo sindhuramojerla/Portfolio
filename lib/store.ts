@@ -745,7 +745,7 @@ export const useAppStore = create<AppState>()(
               try {
                 const households = await fetchUserHouseholds();
                 if (households.length > 0) {
-                  // Switch to the first household
+                  // User has households - load the first one
                   const first = households[0];
                   const config = first.config as HouseholdConfig;
                   const meals = await fetchDayLog(first.id, todayKey());
@@ -764,33 +764,23 @@ export const useAppStore = create<AppState>()(
                       householdName: (h.config as HouseholdConfig).householdName,
                       memberCount: (h.config as HouseholdConfig).members.length,
                     })),
+                    unclaimedHouseholds: [],
                   });
                 } else {
-                  // User logged in but has no households yet
-                  // Check if any unclaimed households exist
-                  try {
-                    const allHouseholds = await fetchAllHouseholds();
-                    const unclaimedHouseholds = allHouseholds.map((h) => ({
-                      id: h.id,
-                      config: h.config as HouseholdConfig,
-                    }));
-
-                    set({
-                      household: DEV_HOUSEHOLD,
-                      knownHouseholds: [],
-                      unclaimedHouseholds,
-                    });
-                  } catch (e) {
-                    console.error("Failed to load unclaimed households:", e);
-                    set({
-                      household: DEV_HOUSEHOLD,
-                      knownHouseholds: [],
-                      unclaimedHouseholds: [],
-                    });
-                  }
+                  // User logged in but has no households - show onboarding
+                  set({
+                    household: DEV_HOUSEHOLD,
+                    knownHouseholds: [],
+                    unclaimedHouseholds: [],
+                  });
                 }
               } catch (e) {
                 console.error("Failed to load user households:", e);
+                set({
+                  household: DEV_HOUSEHOLD,
+                  knownHouseholds: [],
+                  unclaimedHouseholds: [],
+                });
               }
             } else {
               // User logged out: reset to default state
