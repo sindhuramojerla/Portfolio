@@ -13,11 +13,13 @@ import DailySummary from "@/components/DailySummary";
 import Onboarding from "@/components/Onboarding";
 import SettingsSheet from "@/components/SettingsSheet";
 import SyncBanner from "@/components/SyncBanner";
+import ClaimHouseholdModal from "@/components/ClaimHouseholdModal";
 import { Settings, BarChart2 } from "lucide-react";
 
 export default function Home() {
   const {
     household,
+    unclaimedHouseholds,
     selectedDate,
     dayLog,
     startLogging,
@@ -28,6 +30,8 @@ export default function Home() {
     showSummary,
     setShowSummary,
   } = useAppStore();
+
+  const [claimedHousehold, setClaimedHousehold] = useState(false);
 
   const [addState, setAddState] = useState<{
     meal: MealType;
@@ -43,6 +47,24 @@ export default function Home() {
       loadFoods();
     }
   }, [household.onboardingComplete, household.householdId]);
+
+  // ── claim household gate ───────────────────────────────────────────────
+  // Show claim modal if user has unclaimed households
+  if (
+    unclaimedHouseholds.length > 0 &&
+    !household.onboardingComplete &&
+    !claimedHousehold
+  ) {
+    return (
+      <>
+        <Onboarding />
+        <ClaimHouseholdModal
+          household={unclaimedHouseholds[0]}
+          onClaimed={() => setClaimedHousehold(true)}
+        />
+      </>
+    );
+  }
 
   // ── onboarding gate ────────────────────────────────────────────────────
   if (!household.onboardingComplete) return <Onboarding />;

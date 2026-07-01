@@ -27,6 +27,8 @@ import {
   generateJoinCode,
   joinHouseholdWithCode,
   fetchUserHouseholds,
+  fetchAllHouseholds,
+  claimHousehold,
   supabase,
 } from "./supabase";
 import { onAuthStateChange, getCurrentSession, logout as authLogout } from "./auth";
@@ -101,6 +103,7 @@ interface AppState {
   // ── Household ─────────────────────────────────────────────────────────────
   household: HouseholdConfig;
   knownHouseholds: KnownHousehold[];  // all households this device has joined
+  unclaimedHouseholds: Array<{ id: string; config: HouseholdConfig }>;  // existing households user doesn't own yet
 
   // ── Date navigation ───────────────────────────────────────────────────────
   selectedDate: string;
@@ -122,6 +125,7 @@ interface AppState {
   // ── Household actions ─────────────────────────────────────────────────────
   saveHousehold: (config: HouseholdConfig) => Promise<void>;
   joinHousehold: (code: string) => Promise<{ success: boolean; error?: string }>;
+  claimHousehold: (householdId: string) => Promise<{ success: boolean; error?: string }>;
   createAndSwitchHousehold: (config: HouseholdConfig) => Promise<void>;
   switchHousehold: (householdId: string) => Promise<void>;
   leaveHousehold: (householdId: string) => void;
@@ -243,6 +247,7 @@ export const useAppStore = create<AppState>()(
         authLoading: true,
         household: DEV_HOUSEHOLD,
         knownHouseholds: [],
+        unclaimedHouseholds: [],
         selectedDate: todayKey(),
         dayLogsCache: {},
         dayLog: emptyDay(),
@@ -328,6 +333,58 @@ export const useAppStore = create<AppState>()(
             return { success: true };
           } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : "Failed to join";
+            set((s) => ({ sync: { ...s.sync, syncing: false, syncError: msg } }));
+            return { success: false, error: msg };
+          }
+        },
+
+        claimHousehold: async (householdId) => {
+          set((s) => ({ sync: { ...s.sync, syncing: true, syncError: null } }));
+          try {
+            // Claim the household (creates membership for auth.uid())
+            const result = await claimHousehold(householdId);
+            if (!result.success) {
+              set((s) => ({ sync: { ...s.sync, syncing: false } }));
+              return { success: false, error: result.error || "Failed to claim household" };
+            }
+
+            // Fetch the household using RLS-protected query
+            const households = await fetchUserHouseholds();
+            const household = households.find((h) => h.id === householdId);
+            if (!household) {
+              set((s) => ({ sync: { ...s.sync, syncing: false } }));
+              return { success: false, error: "Could not load household data" };
+            }
+
+            const config = household.config as HouseholdConfig;
+            const meals  = await fetchDayLog(householdId, todayKey());
+            const dayLog = meals
+              ? { date: todayKey(), meals: meals as DayLog["meals"] }
+              : emptyDay();
+
+            const entry: KnownHousehold = {
+              householdId:   householdId,
+              joinCode:      household.joinCode ?? "",
+              householdName: config.householdName,
+              memberCount:   config.members.length,
+            };
+
+            set((s) => ({
+              household:       config,
+              dayLog,
+              dayLogsCache:    { [todayKey()]: dayLog },
+              selectedDate:    todayKey(),
+              knownHouseholds: [
+                entry,
+                ...s.knownHouseholds.filter((h) => h.householdId !== householdId),
+              ],
+              unclaimedHouseholds: s.unclaimedHouseholds.filter((h) => h.id !== householdId),
+              sync: { syncing: false, lastSyncedAt: new Date().toISOString(), syncError: null },
+            }));
+
+            return { success: true };
+          } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : "Failed to claim";
             set((s) => ({ sync: { ...s.sync, syncing: false, syncError: msg } }));
             return { success: false, error: msg };
           }
@@ -629,10 +686,27 @@ export const useAppStore = create<AppState>()(
                   });
                 } else {
                   // User logged in but has no households yet
-                  set({
-                    household: DEV_HOUSEHOLD,
-                    knownHouseholds: [],
-                  });
+                  // Check if any unclaimed households exist
+                  try {
+                    const allHouseholds = await fetchAllHouseholds();
+                    const unclaimedHouseholds = allHouseholds.map((h) => ({
+                      id: h.id,
+                      config: h.config as HouseholdConfig,
+                    }));
+
+                    set({
+                      household: DEV_HOUSEHOLD,
+                      knownHouseholds: [],
+                      unclaimedHouseholds,
+                    });
+                  } catch (e) {
+                    console.error("Failed to load unclaimed households:", e);
+                    set({
+                      household: DEV_HOUSEHOLD,
+                      knownHouseholds: [],
+                      unclaimedHouseholds: [],
+                    });
+                  }
                 }
               } catch (e) {
                 console.error("Failed to load user households:", e);
@@ -643,6 +717,7 @@ export const useAppStore = create<AppState>()(
                 currentUserId: null,
                 household: DEV_HOUSEHOLD,
                 knownHouseholds: [],
+                unclaimedHouseholds: [],
                 dayLog: emptyDay(),
                 dayLogsCache: {},
                 selectedDate: todayKey(),

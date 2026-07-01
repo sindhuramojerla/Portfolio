@@ -62,6 +62,63 @@ export async function fetchUserHouseholds() {
   }));
 }
 
+/**
+ * Get all households that exist (for finding unclaimed ones)
+ * Note: This bypasses RLS and requires service role key in migrations
+ */
+export async function fetchAllHouseholds() {
+  const { data, error } = await supabase
+    .from("households")
+    .select("id, config, created_at");
+
+  if (error) {
+    console.error("Error fetching all households:", error);
+    return [];
+  }
+
+  return (data ?? []).map((h: any) => ({
+    id: h.id,
+    config: h.config,
+    createdAt: h.created_at,
+  }));
+}
+
+/**
+ * Claim an existing household for the current authenticated user
+ * Creates a membership entry linking auth.uid() to the household
+ */
+export async function claimHousehold(householdId: string) {
+  try {
+    // Get current user
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.user?.id) {
+      throw new Error("Not authenticated");
+    }
+
+    // Create membership entry
+    const { error: membershipError } = await supabase
+      .from("household_memberships")
+      .upsert(
+        {
+          household_id: householdId,
+          member_id: session.user.id,
+        },
+        { onConflict: "household_id,member_id" }
+      );
+
+    if (membershipError) {
+      throw membershipError;
+    }
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to claim household";
+    console.error("claimHousehold error:", err);
+    return { success: false, error: message };
+  }
+}
+
 export async function upsertHousehold(id: string, joinCode: string, config: object) {
   const { error } = await supabase
     .from("households")
