@@ -132,27 +132,46 @@ export async function claimHousehold(householdId: string) {
 }
 
 export async function upsertHousehold(id: string, joinCode: string, config: object) {
+  console.log("🏠 upsertHousehold START:", {
+    householdId: id.slice(0, 8) + "...",
+    joinCode: joinCode.slice(0, 4) + "...",
+  });
+
   try {
-    const { data, error } = await supabase
+    const { data, error, status } = await supabase
       .from("households")
       .upsert({ id, join_code: joinCode, config }, { onConflict: "id" })
       .select();
 
+    console.log("📡 Supabase response:", {
+      status,
+      hasData: !!data,
+      hasError: !!error,
+    });
+
     if (error) {
-      console.error("❌ upsertHousehold failed:", {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
+      console.error("❌ CRITICAL: upsertHousehold Supabase error:", {
+        code: error.code || "NO_CODE",
+        message: error.message || "NO_MESSAGE",
+        details: error.details || "NO_DETAILS",
+        hint: error.hint || "NO_HINT",
+        status: status,
       });
-      throw error;
+      throw new Error(
+        `Failed to save household to database (${error.code}): ${error.message}`
+      );
     }
 
-    console.log("✅ Household upserted:", { id, config: typeof config });
+    if (!data) {
+      console.warn("⚠️ Upsert succeeded but no data returned");
+    }
+
+    console.log("✅ Household upserted successfully");
     return data;
   } catch (err) {
-    console.error("🔥 upsertHousehold error:", err);
-    throw err;
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("🔥 upsertHousehold FATAL:", errMsg);
+    throw new Error(`Household upsert failed: ${errMsg}`);
   }
 }
 

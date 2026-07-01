@@ -308,16 +308,26 @@ export const useAppStore = create<AppState>()(
 
         saveHousehold: async (config) => {
           try {
-            console.log("💾 saveHousehold:", {
+            const userId = get().currentUserId;
+            console.log("💾 saveHousehold START:", {
               householdId: config.householdId.slice(0, 8) + "...",
               name: config.householdName,
+              authenticated: !!userId,
+              userId: userId ? userId.slice(0, 8) + "..." : "NOT_AUTHENTICATED",
             });
+
+            // CRITICAL: Verify user is authenticated
+            if (!userId) {
+              const errMsg = "Cannot create household: user not authenticated";
+              console.error("❌ " + errMsg);
+              throw new Error(errMsg);
+            }
 
             // 1. Save household config to local state
             set({ household: config });
 
             // 2. Push to Supabase database
-            console.log("📤 Pushing to Supabase...");
+            console.log("📤 Pushing household to Supabase...");
             await pushHousehold(config);
 
             // 3. VERIFY household was actually saved
