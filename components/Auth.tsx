@@ -1,53 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Session } from "@supabase/supabase-js";
-import { login, signup, logout, onAuthStateChange } from "@/lib/auth";
-import { useAppStore } from "@/lib/store";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { login, signup } from "@/lib/auth";
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 
-interface AuthProps {
-  onAuthSuccess: (session: Session) => void;
-}
-
-export default function Auth({ onAuthSuccess }: AuthProps) {
+export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const unsubscribe = onAuthStateChange((session) => {
-      if (session) {
-        onAuthSuccess(session);
-      }
-    });
-    return unsubscribe;
-  }, [onAuthSuccess]);
+  const [successMessage, setSuccessMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccessMessage("");
 
     try {
       if (isLogin) {
         const result = await login(email, password);
         if (!result.success) {
           setError(result.error || "Login failed");
+        } else {
+          // Success! Auth state change will be handled by onAuthStateChange in store
+          setSuccessMessage("Login successful! Loading your household...");
+          setEmail("");
+          setPassword("");
         }
       } else {
         const result = await signup(email, password);
         if (!result.success) {
           setError(result.error || "Signup failed");
         } else {
-          setError(""); // Clear error on successful signup
+          setSuccessMessage("Account created! Please log in.");
           setEmail("");
           setPassword("");
-          setIsLogin(true); // Switch to login after successful signup
+          // Give user a moment to see the success message
+          setTimeout(() => {
+            setSuccessMessage("");
+            setIsLogin(true);
+          }, 2000);
         }
       }
     } catch (e) {
@@ -121,15 +116,16 @@ export default function Auth({ onAuthSuccess }: AuthProps) {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-                {error}
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
             {/* Success Message */}
-            {!isLogin && !error && email && (
+            {successMessage && (
               <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700">
-                ✓ Check your email to confirm your account, then log in
+                ✓ {successMessage}
               </div>
             )}
 

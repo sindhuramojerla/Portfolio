@@ -29,7 +29,7 @@ import {
   fetchUserHouseholds,
   supabase,
 } from "./supabase";
-import { onAuthStateChange, getCurrentSession } from "./auth";
+import { onAuthStateChange, getCurrentSession, logout as authLogout } from "./auth";
 import { v4 as uuidv4 } from "uuid";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -95,6 +95,8 @@ interface SyncState {
 interface AppState {
   // ── Authentication ────────────────────────────────────────────────────────
   currentUserId: string | null;  // Current authenticated user's UID, null if logged out
+  authInitialized: boolean;      // True once auth startup is complete
+  authLoading: boolean;           // True while checking session
 
   // ── Household ─────────────────────────────────────────────────────────────
   household: HouseholdConfig;
@@ -158,7 +160,9 @@ interface AppState {
   resetDay: () => void;
 
   // ── Auth ───────────────────────────────────────────────────────────────────
-  initAuth: () => void;  // Set up auth state listener on app startup
+  initAuth: () => () => void;  // Set up auth state listener on app startup, returns cleanup fn
+  setAuthLoading: (loading: boolean) => void;
+  logout: () => Promise<void>;  // Sign out current user
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -235,6 +239,8 @@ export const useAppStore = create<AppState>()(
 
       return {
         currentUserId: null,
+        authInitialized: false,
+        authLoading: true,
         household: DEV_HOUSEHOLD,
         knownHouseholds: [],
         selectedDate: todayKey(),
@@ -591,10 +597,10 @@ export const useAppStore = create<AppState>()(
         // ── Auth ───────────────────────────────────────────────────────────
 
         initAuth: () => {
-          // Set up auth state listener
-          onAuthStateChange(async (session) => {
+          // Set up auth state listener and return cleanup function
+          const unsubscribe = onAuthStateChange(async (session) => {
             const userId = session?.user?.id ?? null;
-            set({ currentUserId: userId });
+            set((s) => ({ currentUserId: userId, authLoading: false, authInitialized: true }));
 
             if (userId) {
               // User logged in: load their households
@@ -621,6 +627,12 @@ export const useAppStore = create<AppState>()(
                       memberCount: (h.config as HouseholdConfig).members.length,
                     })),
                   });
+                } else {
+                  // User logged in but has no households yet
+                  set({
+                    household: DEV_HOUSEHOLD,
+                    knownHouseholds: [],
+                  });
                 }
               } catch (e) {
                 console.error("Failed to load user households:", e);
@@ -640,6 +652,17 @@ export const useAppStore = create<AppState>()(
               });
             }
           });
+
+          return unsubscribe;
+        },
+
+        setAuthLoading: (loading) => {
+          set({ authLoading: loading });
+        },
+
+        logout: async () => {
+          await authLogout();
+          // onAuthStateChange will fire and reset state via initAuth
         },
       };
     },
